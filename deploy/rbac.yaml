@@ -19,6 +19,10 @@ rules:
   - events
   - configmaps
   - secrets
+  - pods/exec
+  - pods/portforward
+  - pods/attach
+  - pods/proxy
   verbs:
   - "*"
 - apiGroups:

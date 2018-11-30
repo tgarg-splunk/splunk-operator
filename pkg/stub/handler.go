@@ -36,6 +36,11 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 				return err
 			}
 
+			err = UpdateDeployment(o)
+			if err != nil {
+				return err
+			}
+
 			break
 	}
 	return nil
