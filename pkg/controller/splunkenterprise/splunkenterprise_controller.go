@@ -106,5 +106,10 @@ func (r *ReconcileSplunkEnterprise) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 
+	err = enterprise.UpdateDeployment(instance, r.client)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
