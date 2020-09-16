@@ -201,15 +201,17 @@ func TestSmartstoreApplyIndexerClusterFailsOnInvalidSmartStoreConfig(t *testing.
 				VolList: []enterprisev1.VolumeSpec{
 					{Name: "msos_s2s3_vol", Endpoint: "", Path: "testbucket-rs-london"},
 				},
-
-				IndexList: []enterprisev1.IndexSpec{
-					{Name: "salesdata1"},
-					{Name: "salesdata2", RemotePath: "salesdata2"},
-					{Name: "salesdata3", RemotePath: ""},
-				},
 			},
 		},
 	}
+
+	cr.Spec.SmartStore.IndexList[0].Name = "salesdata1"
+
+	cr.Spec.SmartStore.IndexList[1].Name = "salesData2"
+	cr.Spec.SmartStore.IndexList[1].RemotePath = "remotePath"
+
+	cr.Spec.SmartStore.IndexList[2].Name = "salesData3"
+	cr.Spec.SmartStore.IndexList[2].RemotePath = "remotePath"
 
 	var client splcommon.ControllerClient
 
@@ -231,15 +233,17 @@ func TestSmartstoreApplyStandaloneFailsOnInvalidSmartStoreConfig(t *testing.T) {
 				VolList: []enterprisev1.VolumeSpec{
 					{Name: "msos_s2s3_vol", Endpoint: "", Path: "testbucket-rs-london"},
 				},
-
-				IndexList: []enterprisev1.IndexSpec{
-					{Name: "salesdata1"},
-					{Name: "salesdata2", RemotePath: "salesdata2"},
-					{Name: "salesdata3", RemotePath: ""},
-				},
 			},
 		},
 	}
+
+	cr.Spec.SmartStore.IndexList[0].Name = "salesdata1"
+
+	cr.Spec.SmartStore.IndexList[1].Name = "salesdata2"
+	cr.Spec.SmartStore.IndexList[1].RemotePath = "remotePath1"
+
+	cr.Spec.SmartStore.IndexList[2].Name = "salesdata3"
+	cr.Spec.SmartStore.IndexList[2].RemotePath = ""
 
 	var client splcommon.ControllerClient
 
@@ -261,15 +265,20 @@ func TestSmartStoreConfigDoesNotFailOnIndexerClusterCRForCM(t *testing.T) {
 				VolList: []enterprisev1.VolumeSpec{
 					{Name: "msos_s2s3_vol", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 				},
-
-				IndexList: []enterprisev1.IndexSpec{
-					{Name: "salesdata1", VolName: "msos_s2s3_vol"},
-					{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-					{Name: "salesdata3", RemotePath: "", VolName: "msos_s2s3_vol"},
-				},
 			},
 		},
 	}
+
+	cr.Spec.SmartStore.IndexList[0].Name = "salesdata1"
+	cr.Spec.SmartStore.IndexList[0].VolName = "msos_s2s3_vol"
+
+	cr.Spec.SmartStore.IndexList[1].Name = "salesdata2"
+	cr.Spec.SmartStore.IndexList[1].RemotePath = "remotePath1"
+	cr.Spec.SmartStore.IndexList[1].VolName = "msos_s2s3_vol"
+
+	cr.Spec.SmartStore.IndexList[2].Name = "salesdata3"
+	cr.Spec.SmartStore.IndexList[2].RemotePath = ""
+	cr.Spec.SmartStore.IndexList[2].VolName = "msos_s2s3_vol"
 
 	err := validateIndexerClusterSpec(&cr)
 
@@ -290,15 +299,17 @@ func TestSmartStoreConfigFailsOnIndexerClusterCRForIndexers(t *testing.T) {
 				VolList: []enterprisev1.VolumeSpec{
 					{Name: "msos_s2s3_vol", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 				},
-
-				IndexList: []enterprisev1.IndexSpec{
-					{Name: "salesdata1"},
-					{Name: "salesdata2", RemotePath: "salesdata2"},
-					{Name: "salesdata3", RemotePath: ""},
-				},
 			},
 		},
 	}
+
+	cr.Spec.SmartStore.IndexList[0].Name = "salesdata1"
+
+	cr.Spec.SmartStore.IndexList[1].Name = "salesdata2"
+	cr.Spec.SmartStore.IndexList[1].RemotePath = "remotePath1"
+
+	cr.Spec.SmartStore.IndexList[2].Name = "salesdata3"
+	cr.Spec.SmartStore.IndexList[2].RemotePath = ""
 
 	cr.Spec.IndexerClusterRef.Name = "testRefWithCM"
 
@@ -317,13 +328,17 @@ func TestValidateSplunkSmartstoreSpec(t *testing.T) {
 		VolList: []enterprisev1.VolumeSpec{
 			{Name: "msos_s2s3_vol", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 		},
-
-		IndexList: []enterprisev1.IndexSpec{
-			{Name: "salesdata1", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata3", VolName: "msos_s2s3_vol"},
-		},
 	}
+
+	SmartStore.IndexList[0].Name = "salesdata1"
+	SmartStore.IndexList[0].VolName = "msos_s2s3_vol"
+
+	SmartStore.IndexList[1].Name = "salesdata2"
+	SmartStore.IndexList[1].RemotePath = "remotePath1"
+	SmartStore.IndexList[1].VolName = "msos_s2s3_vol"
+
+	SmartStore.IndexList[2].Name = "salesdata3"
+	SmartStore.IndexList[2].VolName = "msos_s2s3_vol"
 
 	err = ValidateSplunkSmartstoreSpec(&SmartStore)
 	if err != nil {
@@ -336,13 +351,17 @@ func TestValidateSplunkSmartstoreSpec(t *testing.T) {
 			{Name: "msos_s2s3_vol_1", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 			{Name: "msos_s2s3_vol_2", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 		},
-
-		IndexList: []enterprisev1.IndexSpec{
-			{Name: "salesdata1", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata3", VolName: "msos_s2s3_vol"},
-		},
 	}
+
+	SmartStore.IndexList[0].Name = "salesdata1"
+	SmartStore.IndexList[0].VolName = "msos_s2s3_vol"
+
+	SmartStore.IndexList[1].Name = "salesdata2"
+	SmartStore.IndexList[1].RemotePath = "remotePath1"
+	SmartStore.IndexList[1].VolName = "msos_s2s3_vol"
+
+	SmartStore.IndexList[2].Name = "salesdata3"
+	SmartStore.IndexList[2].VolName = "msos_s2s3_vol"
 
 	err = ValidateSplunkSmartstoreSpec(&SmartStoreMultipleVolumes)
 	if err == nil {
@@ -353,12 +372,6 @@ func TestValidateSplunkSmartstoreSpec(t *testing.T) {
 	SmartStoreVolumeWithNoRemoteEndPoint := enterprisev1.SmartStoreSpec{
 		VolList: []enterprisev1.VolumeSpec{
 			{Name: "msos_s2s3_vol", Endpoint: "", Path: "testbucket-rs-london"},
-		},
-
-		IndexList: []enterprisev1.IndexSpec{
-			{Name: "salesdata1", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata3", VolName: "msos_s2s3_vol"},
 		},
 	}
 
@@ -372,12 +385,6 @@ func TestValidateSplunkSmartstoreSpec(t *testing.T) {
 		VolList: []enterprisev1.VolumeSpec{
 			{Name: "", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 		},
-
-		IndexList: []enterprisev1.IndexSpec{
-			{Name: "salesdata1", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata3", VolName: "msos_s2s3_vol"},
-		},
 	}
 
 	err = ValidateSplunkSmartstoreSpec(&SmartStoreWithVolumeNameMissing)
@@ -389,12 +396,6 @@ func TestValidateSplunkSmartstoreSpec(t *testing.T) {
 	SmartStoreWithVolumePathMissing := enterprisev1.SmartStoreSpec{
 		VolList: []enterprisev1.VolumeSpec{
 			{Name: "msos_s2s3_vol", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: ""},
-		},
-
-		IndexList: []enterprisev1.IndexSpec{
-			{Name: "salesdata1", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata3", VolName: "msos_s2s3_vol"},
 		},
 	}
 
@@ -408,13 +409,17 @@ func TestValidateSplunkSmartstoreSpec(t *testing.T) {
 		VolList: []enterprisev1.VolumeSpec{
 			{Name: "msos_s2s3_vol", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 		},
-
-		IndexList: []enterprisev1.IndexSpec{
-			{Name: "", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata3", VolName: "msos_s2s3_vol"},
-		},
 	}
+
+	SmartStore.IndexList[0].Name = ""
+	SmartStore.IndexList[0].VolName = "msos_s2s3_vol"
+
+	SmartStore.IndexList[1].Name = "salesdata2"
+	SmartStore.IndexList[1].RemotePath = "remotePath1"
+	SmartStore.IndexList[1].VolName = "msos_s2s3_vol"
+
+	SmartStore.IndexList[2].Name = "salesdata3"
+	SmartStore.IndexList[2].VolName = "msos_s2s3_vol"
 
 	err = ValidateSplunkSmartstoreSpec(&SmartStoreWithMissingIndexName)
 	if err == nil {
@@ -426,13 +431,17 @@ func TestValidateSplunkSmartstoreSpec(t *testing.T) {
 		VolList: []enterprisev1.VolumeSpec{
 			{Name: "msos_s2s3_vol", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 		},
-
-		IndexList: []enterprisev1.IndexSpec{
-			{Name: "salesdata1", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-			{Name: "salesdata3", VolName: "msos_s2s3_vol"},
-		},
 	}
+
+	SmartStore.IndexList[0].Name = "salesdata1"
+	SmartStore.IndexList[0].VolName = "msos_s2s3_vol"
+
+	SmartStore.IndexList[1].Name = "salesdata2"
+	SmartStore.IndexList[1].RemotePath = "remotePath1"
+	SmartStore.IndexList[1].VolName = "msos_s2s3_vol"
+
+	SmartStore.IndexList[2].Name = "salesdata3"
+	SmartStore.IndexList[2].VolName = "msos_s2s3_vol"
 
 	err = ValidateSplunkSmartstoreSpec(&SmartStoreWithMissingIndexLocation)
 	if err != nil {

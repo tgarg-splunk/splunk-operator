@@ -51,8 +51,13 @@ func ApplyStandalone(client splcommon.ControllerClient, cr *enterprisev1.Standal
 	// updates status after function completes
 	cr.Status.Phase = splcommon.PhaseError
 	cr.Status.Replicas = cr.Spec.Replicas
-	if !reflect.DeepEqual(cr.Status.SmartStore, cr.Spec.SmartStore) {
-		_, err := CreateSmartStoreConfigMap(client, cr, &cr.Spec.SmartStore)
+	if !reflect.DeepEqual(cr.Status.SmartStore, cr.Spec.SmartStore) ||
+		areRemoteVolumeKeysChanged(client, cr, &cr.Spec.CommonSplunkSpec, SplunkStandalone, &cr.Spec.SmartStore, &err) {
+
+		if err != nil {
+			return result, err
+		}
+		_, err = CreateSmartStoreConfigMap(client, cr, &cr.Spec.SmartStore, &cr.Spec.ServerConfig)
 		if err != nil {
 			return result, err
 		}
@@ -122,9 +127,12 @@ func getStandaloneStatefulSet(client splcommon.ControllerClient, cr *enterprisev
 		return nil, err
 	}
 
+	needToSetupSplunkOperatorApp, _, _ := getSmartstoreConfigMap(client, cr, &cr.Spec.CommonSplunkSpec, SplunkStandalone)
 	// add spark and java mounts to search head containers
 	if cr.Spec.SparkRef.Name != "" {
-		addDFCToPodTemplate(&ss.Spec.Template, cr.Spec.SparkRef, cr.Spec.SparkImage, cr.Spec.ImagePullPolicy, cr.Spec.Replicas > 1)
+		addDFCToPodTemplate(&ss.Spec.Template, cr.Spec.SparkRef, cr.Spec.SparkImage, cr.Spec.ImagePullPolicy, cr.Spec.Replicas > 1, needToSetupSplunkOperatorApp)
+	} else if needToSetupSplunkOperatorApp {
+		setupInitContainer(&ss.Spec.Template, cr.Spec.SparkImage, cr.Spec.ImagePullPolicy)
 	}
 
 	return ss, nil

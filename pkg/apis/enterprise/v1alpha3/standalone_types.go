@@ -45,6 +45,9 @@ type StandaloneSpec struct {
 
 	// Splunk Smartstore configuration. Refer to indexes.conf.spec on docs.splunk.com
 	SmartStore SmartStoreSpec `json:"smartstore,omitempty"`
+
+	// Splunk Server Conf. Refer to server.conf.spec on docs.splunk.com
+	ServerConfig ServerConfSpec `json:"serverConf,omitempty"`
 }
 
 // StandaloneStatus defines the observed state of a Splunk Enterprise standalone instances.
@@ -63,6 +66,9 @@ type StandaloneStatus struct {
 
 	// Splunk Smartstore configuration. Refer to indexes.conf.spec on docs.splunk.com
 	SmartStore SmartStoreSpec `json:"smartstore,omitempty"`
+
+	// Splunk Server Conf. Refer to server.conf.spec on docs.splunk.com
+	ServerConfig ServerConfSpec `json:"serverConf,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

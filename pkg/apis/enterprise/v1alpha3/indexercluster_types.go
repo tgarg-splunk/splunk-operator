@@ -37,6 +37,12 @@ type IndexerClusterSpec struct {
 
 	// Splunk Smartstore configuration. Refer to indexes.conf.spec on docs.splunk.com
 	SmartStore SmartStoreSpec `json:"smartstore,omitempty"`
+
+	// Splunk Server Conf. Refer to server.conf.spec on docs.splunk.com
+	ServerConfig ServerConfSpec `json:"serverConf,omitempty"`
+
+	// Image to use for Spark pod containers (overrides RELATED_IMAGE_SPLUNK_SPARK environment variables)
+	SparkImage string `json:"sparkImage"`
 }
 
 // IndexerClusterMemberStatus is used to track the status of each indexer cluster peer.
@@ -94,6 +100,9 @@ type IndexerClusterStatus struct {
 
 	// Splunk Smartstore configuration. Refer to indexes.conf.spec on docs.splunk.com
 	SmartStore SmartStoreSpec `json:"smartstore,omitempty"`
+
+	// Splunk Server Conf. Refer to server.conf.spec on docs.splunk.com
+	ServerConfig ServerConfSpec `json:"serverConf,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -117,15 +117,20 @@ func TestCreateSmartStoreConfigMap(t *testing.T) {
 				VolList: []enterprisev1.VolumeSpec{
 					{Name: "msos_s2s3_vol", Endpoint: "https://s3-eu-west-2.amazonaws.com", Path: "testbucket-rs-london"},
 				},
-
-				IndexList: []enterprisev1.IndexSpec{
-					{Name: "salesdata1", VolName: "msos_s2s3_vol"},
-					{Name: "salesdata2", RemotePath: "salesdata2", VolName: "msos_s2s3_vol"},
-					{Name: "salesdata3", RemotePath: "", VolName: "msos_s2s3_vol"},
-				},
 			},
 		},
 	}
+
+	cr.Spec.SmartStore.IndexList[0].Name = "salesdata1"
+	cr.Spec.SmartStore.IndexList[0].VolName = "msos_s2s3_vol"
+
+	cr.Spec.SmartStore.IndexList[1].Name = "salesdata2"
+	cr.Spec.SmartStore.IndexList[1].RemotePath = "remotePath1"
+	cr.Spec.SmartStore.IndexList[1].VolName = "msos_s2s3_vol"
+
+	cr.Spec.SmartStore.IndexList[2].Name = "salesdata3"
+	cr.Spec.SmartStore.IndexList[2].RemotePath = ""
+	cr.Spec.SmartStore.IndexList[2].VolName = "msos_s2s3_vol"
 
 	client := spltest.NewMockClient()
 
@@ -144,7 +149,7 @@ func TestCreateSmartStoreConfigMap(t *testing.T) {
 
 	test := func(client *spltest.MockClient, cr splcommon.MetaObject, smartstore *enterprisev1.SmartStoreSpec, want string) {
 		f := func() (interface{}, error) {
-			return CreateSmartStoreConfigMap(client, cr, smartstore)
+			return CreateSmartStoreConfigMap(client, cr, smartstore, nil)
 		}
 		configTester(t, "CreateSmartStoreConfigMap()", f, want)
 	}

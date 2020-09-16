@@ -18,6 +18,22 @@ import (
 	splctrl "github.com/splunk/splunk-operator/pkg/splunk/controller"
 )
 
+// GetNamespaceScopedSecretByName retreives namespace scoped secret object for a given name
+func GetNamespaceScopedSecretByName(c splcommon.ControllerClient, namespace string, name string) (*corev1.Secret, error) {
+	var namespaceScopedSecret corev1.Secret
+
+	// Check if a namespace scoped secret exists
+	namespacedName := types.NamespacedName{Namespace: namespace, Name: name}
+	err := c.Get(context.TODO(), namespacedName, &namespaceScopedSecret)
+
+	if err != nil {
+		// Didn't find it
+		return nil, err
+	}
+
+	return &namespaceScopedSecret, nil
+}
+
 // GetNamespaceScopedSecret retreives namespace scoped secret
 func GetNamespaceScopedSecret(c splcommon.ControllerClient, namespace string) (*corev1.Secret, error) {
 	var namespaceScopedSecret corev1.Secret
@@ -25,6 +41,7 @@ func GetNamespaceScopedSecret(c splcommon.ControllerClient, namespace string) (*
 	// Check if a namespace scoped secret exists
 	namespacedName := types.NamespacedName{Namespace: namespace, Name: GetNamespaceScopedSecretName(namespace)}
 	err := c.Get(context.TODO(), namespacedName, &namespaceScopedSecret)
+
 	if err != nil {
 		// Didn't find it
 		return nil, err

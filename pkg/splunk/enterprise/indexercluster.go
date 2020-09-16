@@ -30,6 +30,7 @@ import (
 	splclient "github.com/splunk/splunk-operator/pkg/splunk/client"
 	splcommon "github.com/splunk/splunk-operator/pkg/splunk/common"
 	splctrl "github.com/splunk/splunk-operator/pkg/splunk/controller"
+	"github.com/splunk/splunk-operator/pkg/splunk/spark"
 )
 
 // ApplyIndexerCluster reconciles the state of a Splunk Enterprise indexer cluster.
@@ -55,8 +56,14 @@ func ApplyIndexerCluster(client splcommon.ControllerClient, cr *enterprisev1.Ind
 	cr.Status.Phase = splcommon.PhaseError
 	cr.Status.ClusterMasterPhase = splcommon.PhaseError
 	cr.Status.Replicas = cr.Spec.Replicas
-	if !reflect.DeepEqual(cr.Status.SmartStore, cr.Spec.SmartStore) {
-		_, err := CreateSmartStoreConfigMap(client, cr, &cr.Spec.SmartStore)
+
+	if !reflect.DeepEqual(cr.Status.SmartStore, cr.Spec.SmartStore) ||
+		areRemoteVolumeKeysChanged(client, cr, &cr.Spec.CommonSplunkSpec, SplunkIndexer, &cr.Spec.SmartStore, &err) {
+
+		if err != nil {
+			return result, err
+		}
+		_, err = CreateSmartStoreConfigMap(client, cr, &cr.Spec.SmartStore, &cr.Spec.ServerConfig)
 		if err != nil {
 			return result, err
 		}
@@ -335,7 +342,15 @@ func (mgr *indexerClusterPodManager) updateStatus(statefulSet *appsv1.StatefulSe
 
 // getIndexerStatefulSet returns a Kubernetes StatefulSet object for Splunk Enterprise indexers.
 func getIndexerStatefulSet(client splcommon.ControllerClient, cr *enterprisev1.IndexerCluster) (*appsv1.StatefulSet, error) {
-	return getSplunkStatefulSet(client, cr, &cr.Spec.CommonSplunkSpec, SplunkIndexer, cr.Spec.Replicas, getIndexerExtraEnv(cr, cr.Spec.Replicas))
+	ss, err := getSplunkStatefulSet(client, cr, &cr.Spec.CommonSplunkSpec, SplunkIndexer, cr.Spec.Replicas, getIndexerExtraEnv(cr, cr.Spec.Replicas))
+
+	needToSetupSplunkOperatorApp, _, _ := getSmartstoreConfigMap(client, cr, &cr.Spec.CommonSplunkSpec, SplunkIndexer)
+
+	if needToSetupSplunkOperatorApp {
+		setupInitContainer(&ss.Spec.Template, cr.Spec.SparkImage, cr.Spec.ImagePullPolicy)
+	}
+
+	return ss, err
 }
 
 // getClusterMasterStatefulSet returns a Kubernetes StatefulSet object for a Splunk Enterprise license master.
@@ -360,6 +375,8 @@ func validateIndexerClusterSpec(cr *enterprisev1.IndexerCluster) error {
 	} else if isSmartstoreConfigured(&cr.Spec.SmartStore) {
 		return (fmt.Errorf("Smartstore configuration is only supported with Cluster Master spec"))
 	}
+
+	cr.Spec.SparkImage = spark.GetSparkImage(cr.Spec.SparkImage)
 
 	return validateCommonSplunkSpec(&cr.Spec.CommonSplunkSpec)
 }
