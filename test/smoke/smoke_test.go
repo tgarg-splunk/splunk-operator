@@ -41,7 +41,7 @@ var _ = Describe("Smoke test", func() {
 		}
 	})
 
-	Context("Standalone deployment (S1)", func() {
+	XContext("Standalone deployment (S1)", func() {
 		It("can deploy a standalone instance", func() {
 
 			standalone, err := deployment.DeployStandalone(deployment.GetName())
@@ -69,7 +69,7 @@ var _ = Describe("Smoke test", func() {
 		})
 	})
 
-	Context("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
+	XContext("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
 		It("can deploy indexers and search head cluster", func() {
 
 			idxCount := 3
@@ -141,7 +141,7 @@ var _ = Describe("Smoke test", func() {
 		})
 	})
 
-	Context("Multisite cluster deployment (M13 - Multisite indexer cluster, Search head cluster)", func() {
+	XContext("Multisite cluster deployment (M13 - Multisite indexer cluster, Search head cluster)", func() {
 		It("can deploy indexers and search head cluster", func() {
 
 			siteCount := 3
@@ -241,7 +241,7 @@ var _ = Describe("Smoke test", func() {
 		})
 	})
 
-	Context("Multisite cluster deployment (M1 - multisite indexer cluster)", func() {
+	XContext("Multisite cluster deployment (M1 - multisite indexer cluster)", func() {
 		It("can deploy multisite indexers cluster", func() {
 
 			siteCount := 3
@@ -320,6 +320,34 @@ var _ = Describe("Smoke test", func() {
 
 			// Verify RF SF is met
 			testenv.VerifyRFSFMet(deployment, testenvInstance)
+		})
+	})
+
+	Context("Standalone deployment (S1) with LM", func() {
+		It("can deploy a standalone instance and attach to LM", func() {
+
+			standalone, err := deployment.DeployStandaloneWithLM(deployment.GetName())
+			Expect(err).To(Succeed(), "Unable to deploy standalone instance ")
+
+			Eventually(func() splcommon.Phase {
+				err = deployment.GetInstance(deployment.GetName(), standalone)
+				if err != nil {
+					return splcommon.PhaseError
+				}
+				testenvInstance.Log.Info("Waiting for standalone instance status to be ready", "instance", standalone.ObjectMeta.Name, "Phase", standalone.Status.Phase)
+				dumpGetPods(testenvInstance.GetName())
+
+				return standalone.Status.Phase
+			}, deployment.GetTimeout(), PollInterval).Should(Equal(splcommon.PhaseReady))
+
+			// In a steady state, we should stay in Ready and not flip-flop around
+			Consistently(func() splcommon.Phase {
+				_ = deployment.GetInstance(deployment.GetName(), standalone)
+				return standalone.Status.Phase
+			}, ConsistentDuration, ConsistentPollInterval).Should(Equal(splcommon.PhaseReady))
+
+			// Verify MC Pod is Ready
+			testenv.MCPodReady(testenvInstance.GetName(), deployment)
 		})
 	})
 })
