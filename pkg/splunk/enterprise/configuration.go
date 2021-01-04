@@ -260,6 +260,7 @@ func getSplunkPorts(instanceType InstanceType) map[string]int {
 		result["dfsmaster"] = 9000
 		result["hec"] = 8088
 		result["s2s"] = 9997
+		result["tls"] = 9998
 	case SplunkSearchHead:
 		result["dfccontrol"] = 17000
 		result["datareceive"] = 19000
@@ -267,6 +268,7 @@ func getSplunkPorts(instanceType InstanceType) map[string]int {
 	case SplunkIndexer:
 		result["hec"] = 8088
 		result["s2s"] = 9997
+		result["tls"] = 9998
 	}
 
 	return result
