@@ -43,6 +43,8 @@ func splunkDeletionTester(t *testing.T, cr splcommon.MetaObject, delete func(spl
 		component = "indexer"
 	case "ClusterMaster":
 		component = "cluster-master"
+	case "MonitoringConsole":
+		component = "monitoring-console"
 	}
 
 	labelsB := map[string]string{
@@ -155,6 +157,8 @@ func splunkPVCDeletionTester(t *testing.T, cr splcommon.MetaObject, delete func(
 		component = "indexer"
 	case "ClusterMaster":
 		component = "cluster-master"
+	case "MonitoringConsole":
+		component = "monitoring-console"
 	}
 
 	labels := map[string]string{

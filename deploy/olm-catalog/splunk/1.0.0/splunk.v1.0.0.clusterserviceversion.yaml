@@ -158,6 +158,19 @@ spec:
     - kind: LicenseMaster
       name: licensemasters.enterprise.splunk.com
       version: v1alpha2
+    - description: MonitoringConsole is the Schema for the monitoringconsole API
+      kind: MonitoringConsole
+      name: monitoringconsoles.enterprise.splunk.com
+      version: v1
+    - kind: MonitoringConsole
+      name: monitoringconsoles.enterprise.splunk.com
+      version: v1beta1
+    - kind: MonitoringConsole
+      name: monitoringconsoles.enterprise.splunk.com
+      version: v1alpha3
+    - kind: MonitoringConsole
+      name: monitoringconsoles.enterprise.splunk.com
+      version: v1alpha2
     - description: SearchHeadCluster is the Schema for a Splunk Enterprise search
         head cluster
       kind: SearchHeadCluster

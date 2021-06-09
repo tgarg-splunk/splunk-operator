@@ -17,11 +17,13 @@ package controller
 import (
 	"testing"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	spltest "github.com/splunk/splunk-operator/pkg/splunk/test"
+	splutil "github.com/splunk/splunk-operator/pkg/splunk/util"
 )
 
 func TestApplyConfigMap(t *testing.T) {
@@ -99,5 +101,79 @@ func TestGetConfigMapResourceVersion(t *testing.T) {
 	_, err = GetConfigMapResourceVersion(client, namespacedName)
 	if err != nil {
 		t.Errorf("Should not return an error, when the configMap exists")
+	}
+}
+
+func TestGetMCConfigMap(t *testing.T) {
+	current := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "defaults",
+			Namespace: "test",
+		},
+	}
+
+	client := spltest.NewMockClient()
+	namespacedName := types.NamespacedName{Namespace: current.GetNamespace(), Name: current.GetName()}
+
+	_, err := GetMCConfigMap(client, namespacedName)
+	if err != nil {
+		t.Errorf("Should never return an error as it should have created a empty configmap")
+	}
+
+	_, err = ApplyConfigMap(client, &current)
+	if err != nil {
+		t.Errorf("Failed to create the configMap. Error: %s", err.Error())
+	}
+
+	_, err = GetMCConfigMap(client, namespacedName)
+	if err != nil {
+		t.Errorf("Should not return an error, when the configMap exists")
+	}
+}
+
+func TestSetConfigMapOwnerRef(t *testing.T) {
+	current := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "splunk-test-monitoring-console",
+			Namespace: "test",
+		},
+	}
+
+	c := spltest.NewMockClient()
+	cr := appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "splunk-test-monitoring-console",
+			Namespace: "test",
+		},
+	}
+	namespacedName := types.NamespacedName{Namespace: "test", Name: "splunk-test-monitoring-console"}
+
+	err := SetConfigMapOwnerRef(c, &cr, namespacedName)
+	if err.Error() != "NotFound" {
+		t.Errorf("Couldn't detect resource %s", current.GetName())
+	}
+
+	// Create statefulset
+	err = splutil.CreateResource(c, &cr)
+	if err != nil {
+		t.Errorf("Failed to create owner reference  %s", current.GetName())
+	}
+
+	//create configmap
+	_, err = ApplyConfigMap(c, &current)
+	if err != nil {
+		t.Errorf("Failed to create the configMap. Error: %s", err.Error())
+	}
+
+	// Test existing owner reference
+	err = SetConfigMapOwnerRef(c, &cr, namespacedName)
+	if err != nil {
+		t.Errorf("Couldn't set owner ref for resource %s", current.GetName())
+	}
+
+	// Try adding same owner again
+	err = SetConfigMapOwnerRef(c, &cr, namespacedName)
+	if err != nil {
+		t.Errorf("Couldn't set owner ref for statefulset %s", current.GetName())
 	}
 }
