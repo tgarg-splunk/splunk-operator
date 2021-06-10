@@ -78,30 +78,28 @@ func GetConfigMapResourceVersion(client splcommon.ControllerClient, namespacedNa
 }
 
 // GetMCConfigMap gets the MC ConfigMap resource required for that MC
-func GetMCConfigMap(client splcommon.ControllerClient, namespacedName types.NamespacedName) (*corev1.ConfigMap, error) {
+func GetMCConfigMap(client splcommon.ControllerClient, cr splcommon.MetaObject, namespacedName types.NamespacedName) (*corev1.ConfigMap, error) {
 	var configMap corev1.ConfigMap
 	err := client.Get(context.TODO(), namespacedName, &configMap)
 	if err != nil {
 		//if we don't find mc configmap create and return an empty configmap
-		var current corev1.ConfigMap
-		current.Data = make(map[string]string)
-		current = corev1.ConfigMap{
+		var configMap corev1.ConfigMap
+		configMap.Data = make(map[string]string)
+		configMap = corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      namespacedName.Name,
 				Namespace: namespacedName.Namespace,
 			},
 			Data: make(map[string]string),
 		}
-		current.ObjectMeta = metav1.ObjectMeta{
-			Name:      namespacedName.Name,
-			Namespace: namespacedName.Namespace,
-		}
-
-		err = splutil.CreateResource(client, &current)
+		err = splutil.CreateResource(client, &configMap)
 		if err != nil {
 			return nil, err
 		}
-		return &current, nil
+	}
+	err = SetConfigMapOwnerRef(client, cr, namespacedName)
+	if err != nil {
+		return nil, err
 	}
 	return &configMap, nil
 }

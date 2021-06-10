@@ -54,19 +54,6 @@ func ApplyMonitoringConsole(client splcommon.ControllerClient, cr *enterprisev1.
 
 	// updates status after function completes
 	cr.Status.Phase = splcommon.PhaseError
-	if !reflect.DeepEqual(cr.Status.SmartStore, cr.Spec.SmartStore) ||
-		AreRemoteVolumeKeysChanged(client, cr, SplunkMonitoringConsole, &cr.Spec.SmartStore, cr.Status.ResourceRevMap, &err) {
-		if err != nil {
-			return result, err
-		}
-
-		_, _, err := ApplySmartstoreConfigMap(client, cr, &cr.Spec.SmartStore)
-		if err != nil {
-			return result, err
-		}
-
-		cr.Status.SmartStore = cr.Spec.SmartStore
-	}
 
 	cr.Status.Selector = fmt.Sprintf("app.kubernetes.io/instance=splunk-%s-monitoring-console", cr.GetName())
 	defer func() {
@@ -81,7 +68,6 @@ func ApplyMonitoringConsole(client splcommon.ControllerClient, cr *enterprisev1.
 
 	// check if deletion has been requested
 	if cr.ObjectMeta.DeletionTimestamp != nil {
-		DeleteOwnerReferencesForResources(client, cr, &cr.Spec.SmartStore)
 		terminating, err := splctrl.CheckForDeletion(cr, client)
 		if terminating && err != nil { // don't bother if no error, since it will just be removed immmediately after
 			cr.Status.Phase = splcommon.PhaseTerminating
@@ -145,19 +131,10 @@ func getMonitoringConsoleStatefulSet(client splcommon.ControllerClient, cr *ente
 
 	//update podTemplate annotation with configMap resource version
 	namespacedName := types.NamespacedName{Namespace: cr.GetNamespace(), Name: configMap}
-	monitoringConsoleConfigMap, err = splctrl.GetMCConfigMap(client, namespacedName)
+	monitoringConsoleConfigMap, err = splctrl.GetMCConfigMap(client, cr, namespacedName)
 	if err != nil {
 		return nil, err
 	}
-
-	//set the owner reference for the corresponding configmap
-	//TODO: this will delete the cm once the mc pod is deleted, once mcref is defined in other CRs verify
-	//TODO: if same mcref is present in some CRs then cm if created
-	err = splctrl.SetConfigMapOwnerRef(client, cr, namespacedName)
-	if err != nil {
-		return nil, err
-	}
-
 	ss.Spec.Template.ObjectMeta.Annotations[monitoringConsoleConfigRev] = monitoringConsoleConfigMap.ResourceVersion
 	return ss, nil
 }

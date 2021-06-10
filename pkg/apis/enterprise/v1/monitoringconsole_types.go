@@ -30,9 +30,6 @@ import (
 // MonitoringConsoleSpec defines the desired state of MonitoringConsole
 type MonitoringConsoleSpec struct {
 	CommonSplunkSpec `json:",inline"`
-
-	// Splunk Smartstore configuration. Refer to indexes.conf.spec and server.conf.spec on docs.splunk.com
-	SmartStore SmartStoreSpec `json:"smartstore,omitempty"`
 }
 
 // MonitoringConsoleStatus defines the observed state of MonitoringConsole
@@ -42,9 +39,6 @@ type MonitoringConsoleStatus struct {
 
 	// selector for pods, used by HorizontalPodAutoscaler
 	Selector string `json:"selector"`
-
-	// Splunk Smartstore configuration. Refer to indexes.conf.spec and server.conf.spec on docs.splunk.com
-	SmartStore SmartStoreSpec `json:"smartstore,omitempty"`
 
 	// Bundle push status tracker
 	BundlePushTracker BundlePushInfo `json:"bundlePushInfo"`

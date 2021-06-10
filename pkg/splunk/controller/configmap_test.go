@@ -22,6 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	enterprisev1 "github.com/splunk/splunk-operator/pkg/apis/enterprise/v1"
 	spltest "github.com/splunk/splunk-operator/pkg/splunk/test"
 	splutil "github.com/splunk/splunk-operator/pkg/splunk/util"
 )
@@ -112,10 +113,19 @@ func TestGetMCConfigMap(t *testing.T) {
 		},
 	}
 
+	cr := enterprisev1.MonitoringConsole{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "MonitoringConsole",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "stack1",
+			Namespace: "test",
+		},
+	}
 	client := spltest.NewMockClient()
 	namespacedName := types.NamespacedName{Namespace: current.GetNamespace(), Name: current.GetName()}
 
-	_, err := GetMCConfigMap(client, namespacedName)
+	_, err := GetMCConfigMap(client, &cr, namespacedName)
 	if err != nil {
 		t.Errorf("Should never return an error as it should have created a empty configmap")
 	}
@@ -125,7 +135,7 @@ func TestGetMCConfigMap(t *testing.T) {
 		t.Errorf("Failed to create the configMap. Error: %s", err.Error())
 	}
 
-	_, err = GetMCConfigMap(client, namespacedName)
+	_, err = GetMCConfigMap(client, &cr, namespacedName)
 	if err != nil {
 		t.Errorf("Should not return an error, when the configMap exists")
 	}
@@ -156,7 +166,7 @@ func TestSetConfigMapOwnerRef(t *testing.T) {
 	// Create statefulset
 	err = splutil.CreateResource(c, &cr)
 	if err != nil {
-		t.Errorf("Failed to create owner reference  %s", current.GetName())
+		t.Errorf("Failed to create resource  statefulset %s", current.GetName())
 	}
 
 	//create configmap
@@ -168,12 +178,12 @@ func TestSetConfigMapOwnerRef(t *testing.T) {
 	// Test existing owner reference
 	err = SetConfigMapOwnerRef(c, &cr, namespacedName)
 	if err != nil {
-		t.Errorf("Couldn't set owner ref for resource %s", current.GetName())
+		t.Errorf("Couldn't set owner ref for resource configmap %s", current.GetName())
 	}
 
 	// Try adding same owner again
 	err = SetConfigMapOwnerRef(c, &cr, namespacedName)
 	if err != nil {
-		t.Errorf("Couldn't set owner ref for statefulset %s", current.GetName())
+		t.Errorf("Couldn't set owner ref for resource configmap %s", current.GetName())
 	}
 }
