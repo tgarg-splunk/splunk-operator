@@ -50,6 +50,16 @@ var _ = Describe("Monitoring Console test", func() {
 		}
 	})
 
+	Context("Deploy Monitoring Console", func() {
+		It("smoke, monitoring_console: can deploy MC CR", func() {
+			mc, err := deployment.DeployMonitoringConsole(deployment.GetName(), "")
+			Expect(err).To(Succeed(), "Unable to deploy Monitoring Console instance")
+
+			// Verify MC is Ready and stays in ready state
+			testenv.VerifyMCReady(deployment, deployment.GetName(), mc, testenvInstance)
+		})
+	})
+
 	XContext("Standalone deployment (S1)", func() {
 		It("monitoring_console, integration: can deploy a MC with standalone instance and update MC with new standalone deployment", func() {
 
