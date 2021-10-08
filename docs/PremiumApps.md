@@ -48,26 +48,25 @@ When installing ES on an indexer cluster the Splunk Operator will utilize the Cl
 
 When crafting your Custom Resource to create a Splunk Enterprise Deployment it is necessary to take the following configurations into account.
 
-* [appSources](https://splunk.github.io/splunk-operator/AppFramework.html#appsources) scope
+##### [appSources](https://splunk.github.io/splunk-operator/AppFramework.html#appsources) scope
    
    - When deploying ES to a Standalone or Standalone Search Head, it must be configured with an appSources scope of local.
    - When deploying ES to a Search Head Cluster or Indexer Cluster, it must be configured with an appSources scope of clusterWithPreConfig.
 
-* livenessInitialDelaySeconds 
+##### livenessInitialDelaySeconds 
 As Splunk Enterprise Security is a large app package, it may be necessary to increase the livenessInitialDelaySeconds to allow sufficient time for the apps to be installed.  
 
 The default livenessInitialDelaySeconds when utiltizing the App Framework method of installation is 1800 seconds, which may be large enough to install ES alone, however, if installing apps in conjunction with ES it will likely need to be raised to a higher value.
 
-*  SSL Enablement
+#####  SSL Enablement
 
 When installing ES versions 6.3.0+ it is necessary to supply a value for the parameter ssl_enablement. By default the value of strict is used which requires Splunk to have SSL enabled in web.conf. The below table can be used for reference of available values. 
 
-TODO: Make Table
-SSL mode	Description
-strict	Default mode
-Ensure that SSL is enabled in the web.conf configuration file to use this mode. Otherwise, the installer exists with an error.
-auto	Enables SSL in the etc/system/local/web.conf configuration file.
-ignore	Ignores whether SSL is enabled or disabled.
+| SSL mode	| Description |
+| --------- | ----------- |
+|strict     |	Default mode. Ensure that SSL is enabled in the web.conf configuration file to use this mode. Otherwise, the installer exists with an error. |
+| auto	   | Enables SSL in the etc/system/local/web.conf configuration file. |
+| ignore	   | Ignores whether SSL is enabled or disabled. |
 
 The Operator passes the ssl_enablement parameter through an ansible environment variable named "SPLUNK_ESS_SSL_ENABLEMENT" using the Operator's extraEnv feature.
 
@@ -77,7 +76,7 @@ The Operator passes the ssl_enablement parameter through an ansible environment 
     value: ignore
 ```
 
-* Search Head Cluster server.conf timeouts - necessary to bump up when deploying larger apps
+##### Search Head Cluster server.conf timeouts - necessary to bump up when deploying larger apps
 
 It may be necessary to increase the value of the default Search Head Clustering network timeouts to ensure that the connections made from the deployer to the Search Heads while pushing apps do not timeout. 
 
