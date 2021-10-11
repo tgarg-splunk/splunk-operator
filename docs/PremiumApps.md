@@ -12,6 +12,7 @@ Installing Enterprise Security requires the following:
 
 * Ability to utilize the Splunk Operator [app framework](https://splunk.github.io/splunk-operator/AppFramework.html) method of installation.
 * Access to the [Splunk Enterprise Security](https://splunkbase.splunk.com/app/263/) app package. 
+* Pod resource specs that meet the [Enterprise Security hardware requirements](https://docs.splunk.com/Documentation/ES/latest/Install/DeploymentPlanning#Hardware_requirements).
 * Enterprise Security Version 6.4.1 or 6.6.0 as Splunk Operator requires Splunk Enterprise 8.2.2 or later. For more information regarding Splunk Enterprise and Enterprise Security compatibility, see the [version compatibility matrix](https://docs.splunk.com/Documentation/VersionCompatibility/current/Matrix/CompatMatrix).
 
 
