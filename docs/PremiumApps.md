@@ -8,7 +8,7 @@ The Splunk Operator currently provides support for automating installation of En
 
 ### Prerequisites
 
-Installing Enterprise Security requires the following:
+Installing Enterprise Security in a Kubernetes cluster with the Splunk Operator requires the following:
 
 * Ability to utilize the Splunk Operator [app framework](https://splunk.github.io/splunk-operator/AppFramework.html) method of installation.
 * Access to the [Splunk Enterprise Security](https://splunkbase.splunk.com/app/263/) app package. 
@@ -213,9 +213,11 @@ spec:
 
 All that needs to be done to install Enterprise Security through the Operator is to ensure that the Enterprise Security App package is present in the bucket configured through [AppFramework](https://splunk.github.io/splunk-operator/AppFramework.html) and to apply the specified custom resource(s). 
 
-Note: Installation may take upwards of 30 minutes for Search Head Clustering and Indexer Clustering environments.
+**Important Considerations**
+* Installation may take upwards of 30 minutes for Search Head Clustering and Indexer Clustering environments.
 
-Note: In indexer cluster environments, it is necessary to also install ES on the Cluster Manager.
+* In indexer clustering environments, it is necessary to also install ES on the Cluster Manager to ensure the proper configurations are pushed to the indexer cluster members.
+
 
 
 #### Post Installation Configuration
@@ -232,6 +234,8 @@ After installing Enterprise Security
 ### Upgrade Steps
 
 To upgrade ES, all that is required is to move the new ES package into the specified AppFramework bucket. This will initiate a pod reset and begin the process of upgrading the new version.
+
+### Troubleshooting
 
 
 ### Current Limitations
