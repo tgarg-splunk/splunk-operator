@@ -76,7 +76,7 @@ The Operator passes the ssl_enablement parameter through an ansible environment 
     value: ignore
 ```
 
-##### Search Head Cluster server.conf timeouts - necessary to bump up when deploying larger apps
+##### Search Head Cluster server.conf timeouts
 
 It may be necessary to increase the value of the default Search Head Clustering network timeouts to ensure that the connections made from the deployer to the Search Heads while pushing apps do not timeout. 
 
@@ -109,7 +109,7 @@ Increasing the value of splunkdConnectionTimeout in web.conf will help ensure th
 ```
 ### Example YAML
 
-Configure a Search Head Cluster with Indexer Cluster
+The below yaml will configure ES on a Search Head Cluster which searches an Indexer Cluster. The assumptions made are that the ES app tarball exists in an s3 bucket location named "testfolder".
 ```yaml
 apiVersion: enterprise.splunk.com/v2
 kind: SearchHeadCluster
