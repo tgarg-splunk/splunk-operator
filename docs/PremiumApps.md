@@ -85,44 +85,28 @@ These timeouts can be set through defaults.yaml
   defaults: |-
     splunk:
       conf:
-        - key: serverclass
+        - key: server
           value:
             directory: /opt/splunk/etc/system/local
-              global:
-                rcv_timeout: 120
-                send_timeeout: 120
-                cxn_timeeout: 120
+              shclustering:
+                rcv_timeout: 300
+                send_timeeout: 300
+                cxn_timeeout: 300
 ```
 
-* splunkdConnectionTimeout (optional)
-max_upload_size = 1024
-Only use this if want to upgrade manually through the UI
-
-
-#### Installation steps
-
-All that needs to be done to install Enterprise Security through the Operator is to ensure that the Enterprise Security App package is present in the bucket configured through [AppFramework](https://splunk.github.io/splunk-operator/AppFramework.html) and to apply the specified custom resource(s). 
-
-Note: Installation may take upwards of 30 minutes for Search Head Clustering and Indexer Clustering environments.
-
-Note: In indexer cluster environments, it is necessary to also install ES on the Cluster Manager.
-
-
-#### Post Installation Configuration
-
-After installing Enterprise Security 
-
-* [Setup Integration with Splunk Stream](https://docs.splunk.com/Documentation/ES/latest/Install/IntegrateSplunkStream) (optional)
-
-* [Configure Users and Roles as desired](https://docs.splunk.com/Documentation/ES/latest/Install/ConfigureUsersRoles)
-
-* [Configure Datamodels](https://docs.splunk.com/Documentation/ES/latest/Install/Datamodels)
-
-
-### Upgrade Steps
-
-To upgrade ES, all that is required is to move the new ES package into the specified AppFramework bucket. This will initiate a pod reset and begin the process of upgrading the new version.
-
+##### splunkdConnectionTimeout
+Increasing the value of splunkdConnectionTimeout in web.conf will help ensure that all API calls made by the installer script will not timeout and prevent installation from succeeding.
+```yaml
+  defaults: |-
+    splunk:
+      conf:
+        - key: web
+          value:
+            directory: /opt/splunk/etc/system/local
+            content:
+              settings:
+                splunkdConnectionTimeout: 300
+```
 ### Example YAML
 
 Configure a Search Head Cluster with Indexer Cluster
@@ -153,6 +137,22 @@ spec:
   livenessInitialDelaySeconds: 1800
   clusterMasterRef:
     name: es-cm
+  defaults: |-
+    splunk:
+      conf:
+        - key: server
+          value:
+            directory: /opt/splunk/etc/system/local
+              shclustering:
+                rcv_timeout: 300
+                send_timeeout: 300
+                cxn_timeeout: 300
+        - key: web
+          value:
+            directory: /opt/splunk/etc/system/local
+            content:
+              settings:
+                splunkdConnectionTimeout: 300
   extraEnv:
   - name: SPLUNK_ES_SSL_ENABLEMENT
     value: ignore
@@ -206,6 +206,32 @@ spec:
     name: es-cm
   replicas: 3
 ```
+
+
+#### Installation steps
+
+All that needs to be done to install Enterprise Security through the Operator is to ensure that the Enterprise Security App package is present in the bucket configured through [AppFramework](https://splunk.github.io/splunk-operator/AppFramework.html) and to apply the specified custom resource(s). 
+
+Note: Installation may take upwards of 30 minutes for Search Head Clustering and Indexer Clustering environments.
+
+Note: In indexer cluster environments, it is necessary to also install ES on the Cluster Manager.
+
+
+#### Post Installation Configuration
+
+After installing Enterprise Security 
+
+* [Setup Integration with Splunk Stream](https://docs.splunk.com/Documentation/ES/latest/Install/IntegrateSplunkStream) (optional)
+
+* [Configure Users and Roles as desired](https://docs.splunk.com/Documentation/ES/latest/Install/ConfigureUsersRoles)
+
+* [Configure Datamodels](https://docs.splunk.com/Documentation/ES/latest/Install/Datamodels)
+
+
+### Upgrade Steps
+
+To upgrade ES, all that is required is to move the new ES package into the specified AppFramework bucket. This will initiate a pod reset and begin the process of upgrading the new version.
+
 
 ### Current Limitations
 
