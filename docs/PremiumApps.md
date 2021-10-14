@@ -28,7 +28,7 @@ Supported Architectures Include:
 
 Notably, if deploying a distributed search environment, the use of indexer clustering is required to ensure that the necessary Enterprise Security specific configuration is pushed to the indexers via the Cluster Manager.
 
-### What is automated
+### What is automated by the Splunk Operator
 
 The Splunk Operator will install the necessary Enterprise Security components depending on the architecture specified by the applied CRDs.
 
