@@ -224,6 +224,8 @@ All that needs to be done to install Enterprise Security through the Operator is
 
 After installing Enterprise Security 
 
+* [Deploy add-ons to Splunk Enterprise Security](https://docs.splunk.com/Documentation/ES/latest/Install/InstallTechnologyAdd-ons)
+
 * [Setup Integration with Splunk Stream](https://docs.splunk.com/Documentation/ES/latest/Install/IntegrateSplunkStream) (optional)
 
 * [Configure Users and Roles as desired](https://docs.splunk.com/Documentation/ES/latest/Install/ConfigureUsersRoles)
@@ -234,6 +236,10 @@ After installing Enterprise Security
 ### Upgrade Steps
 
 To upgrade ES, all that is required is to move the new ES package into the specified AppFramework bucket. This will initiate a pod reset and begin the process of upgrading the new version.
+
+* The upgrade process will preserve any knowledge objects that exist in app local directories.
+
+* Be sure to check the [ES upgrade notes](https://docs.splunk.com/Documentation/ES/latest/Install/Upgradetonewerversion#Version-specific_upgrade_notes) for any version specific changes.
 
 ### Troubleshooting
 
