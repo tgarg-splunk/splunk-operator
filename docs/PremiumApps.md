@@ -36,7 +36,7 @@ The Splunk Operator will install the necessary Enterprise Security components de
 For standalones and standalone search heads the Operator will install Splunk Enterprise Security and all associated domain add-ons (DAs), and supporting add-ons (SAs).
 
 #### Search Head Cluster
-When installing Enterprise Security in a Search Head Cluster, the Operator will install ES and all associated add-ons to the Deployer instance which will then subsequently push the apps to the Search Head Cluster members. This allows for an admin to [manage Enterprise Security through the deployer](https://docs.splunk.com/Documentation/ES/6.6.2/Install/InstallEnterpriseSecuritySHC#Managing_configuration_changes_in_a_search_head_cluster). 
+When installing Enterprise Security in a Search Head Cluster, the Operator will stage ES and all associated DAs and SAs to the Deployer's etc/shcluster/apps directory, and will then push the apps to the Search Head Cluster members. This allows for an admin to [manage Enterprise Security through the deployer](https://docs.splunk.com/Documentation/ES/6.6.2/Install/InstallEnterpriseSecuritySHC#Managing_configuration_changes_in_a_search_head_cluster). 
 
 #### Indexer Cluster
 When installing ES on an indexer cluster the Splunk Operator will utilize the Cluster Manager to generate and distribute the [Splunk_TA_ForIndexers](https://docs.splunk.com/Documentation/ES/latest/Install/InstallTechnologyAdd-ons#Create_the_Splunk_TA_ForIndexers_and_manage_deployment_manually) app to the indexer cluster members. This TA contains indexes, props, and transforms configurations that are necessary for the indexers.
