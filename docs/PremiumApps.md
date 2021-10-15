@@ -108,6 +108,8 @@ Increasing the value of splunkdConnectionTimeout in web.conf will help ensure th
               settings:
                 splunkdConnectionTimeout: 300
 ```
+
+
 ### Example YAML
 
 The below yaml will configure ES on a Search Head Cluster which searches an Indexer Cluster. The assumptions made are that the ES app tarball exists in an s3 bucket location named "testfolder".
@@ -219,7 +221,6 @@ All that needs to be done to install Enterprise Security through the Operator is
 * In indexer clustering environments, it is necessary to also install ES on the Cluster Manager to ensure the proper configurations are pushed to the indexer cluster members.
 
 
-
 #### Post Installation Configuration
 
 After installing Enterprise Security 
@@ -227,6 +228,9 @@ After installing Enterprise Security
 * [Deploy add-ons to Splunk Enterprise Security](https://docs.splunk.com/Documentation/ES/latest/Install/InstallTechnologyAdd-ons)
 
 * [Setup Integration with Splunk Stream](https://docs.splunk.com/Documentation/ES/latest/Install/IntegrateSplunkStream) (optional)
+
+* [Configure and deploy indexes](https://docs.splunk.com/Documentation/ES/latest/Install/Indexes)
+  The indexes associated with the packaged DAs and SAs will automatically be pushed to indexers when using indexer clustering, this step is only necessary if it is desired to configure any [custom index configuration](https://docs.splunk.com/Documentation/ES/latest/Install/Indexes#Index_configuration). Additionally, any newly installed technical ad-ons which are not included with the ES package may require index deployment.
 
 * [Configure Users and Roles as desired](https://docs.splunk.com/Documentation/ES/latest/Install/ConfigureUsersRoles)
 
@@ -249,6 +253,3 @@ To upgrade ES, all that is required is to move the new ES package into the speci
 * Need to deploy add-ons to forwarders manually (or through your own methods).
 
 * Need to deploy Stream App Manually
-
-
-
