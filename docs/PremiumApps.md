@@ -225,12 +225,11 @@ All that needs to be done to install Enterprise Security through the Operator is
 
 After installing Enterprise Security 
 
-* [Deploy add-ons to Splunk Enterprise Security](https://docs.splunk.com/Documentation/ES/latest/Install/InstallTechnologyAdd-ons)
+* [Deploy add-ons to Splunk Enterprise Security](https://docs.splunk.com/Documentation/ES/latest/Install/InstallTechnologyAdd-ons) - Technology add-ons (TAs) which need to be installed to indexers can be installed via AppFramework, while TAs that reside on forwarders will need to be installed manually or via third party configuration management.
 
 * [Setup Integration with Splunk Stream](https://docs.splunk.com/Documentation/ES/latest/Install/IntegrateSplunkStream) (optional)
 
-* [Configure and deploy indexes](https://docs.splunk.com/Documentation/ES/latest/Install/Indexes)
-  The indexes associated with the packaged DAs and SAs will automatically be pushed to indexers when using indexer clustering, this step is only necessary if it is desired to configure any [custom index configuration](https://docs.splunk.com/Documentation/ES/latest/Install/Indexes#Index_configuration). Additionally, any newly installed technical ad-ons which are not included with the ES package may require index deployment.
+* [Configure and deploy indexes](https://docs.splunk.com/Documentation/ES/latest/Install/Indexes) - The indexes associated with the packaged DAs and SAs will automatically be pushed to indexers when using indexer clustering, this step is only necessary if it is desired to configure any [custom index configuration](https://docs.splunk.com/Documentation/ES/latest/Install/Indexes#Index_configuration). Additionally, any newly installed technical ad-ons which are not included with the ES package may require index deployment.
 
 * [Configure Users and Roles as desired](https://docs.splunk.com/Documentation/ES/latest/Install/ConfigureUsersRoles)
 
@@ -246,6 +245,14 @@ To upgrade ES, all that is required is to move the new ES package into the speci
 * Be sure to check the [ES upgrade notes](https://docs.splunk.com/Documentation/ES/latest/Install/Upgradetonewerversion#Version-specific_upgrade_notes) for any version specific changes.
 
 ### Troubleshooting
+
+Enterprise Security installation is currently relies on ansible, so the first place to check if installation fails is the container's ansible log. This log can be accessed using kubectl:
+```
+kubectl logs <pod_name>
+```
+Common issues that may be encountered are : 
+* Task timeouts - raise associated timeout (splunkdConnectionTimeout, rcvTimeout, etc.)
+* Pod Recycles - raise livenessProbe value
 
 
 ### Current Limitations
