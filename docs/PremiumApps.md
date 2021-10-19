@@ -11,11 +11,10 @@ The Splunk Operator currently provides support for automating installation of En
 Installing Enterprise Security in a Kubernetes cluster with the Splunk Operator requires the following:
 
 * Ability to utilize the Splunk Operator [app framework](https://splunk.github.io/splunk-operator/AppFramework.html) method of installation.
-* Access to the [Splunk Enterprise Security](https://splunkbase.splunk.com/app/263/) app package. 
+* Access to the [Splunk Enterprise Security](https://splunkbase.splunk.com/app/263/) app package.
+* Splunk Enterprise Security version 6.4.1 or 6.6.0 as Splunk Operator requires Splunk Enterprise 8.2.2 or later. For more information regarding Splunk Enterprise and Enterprise Security compatibility, see the [version compatibility matrix](https://docs.splunk.com/Documentation/VersionCompatibility/current/Matrix/CompatMatrix).
+* If installing to an Indexer Cluster, access to the corresponding Splunk_TA_ForIndexers app from the Enterprise Security package (can be found in the ES app package at SplunkEnterpriseSecuritySuite/install/splunkcloud/splunk_app_es/Splunk_TA_ForIndexers-\<version\>.spl). This app must be deployed to indexer cluster members to ensure they have the proper indexes, props, and transforms configurations. 
 * Pod resource specs that meet the [Enterprise Security hardware requirements](https://docs.splunk.com/Documentation/ES/latest/Install/DeploymentPlanning#Hardware_requirements).
-* Enterprise Security Version 6.4.1 or 6.6.0 as Splunk Operator requires Splunk Enterprise 8.2.2 or later. For more information regarding Splunk Enterprise and Enterprise Security compatibility, see the [version compatibility matrix](https://docs.splunk.com/Documentation/VersionCompatibility/current/Matrix/CompatMatrix).
-* If installing to an Indexer Cluster, access to the corresponding Splunk_TA_ForIndexers app from the Enterprise Security package (resides in SplunkEnterpriseSecuritySuite/install/splunkcloud/splunk_app_es/Splunk_TA_ForIndexers-<version>.spl). In Indexer Clustering deployments, this app must be deployed to indexer cluster members to ensure they have the proper indexes, props, and transforms configurations. 
-
 
 
 ### Supported Deployment Types
