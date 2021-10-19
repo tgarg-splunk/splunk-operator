@@ -14,6 +14,7 @@ Installing Enterprise Security in a Kubernetes cluster with the Splunk Operator 
 * Access to the [Splunk Enterprise Security](https://splunkbase.splunk.com/app/263/) app package. 
 * Pod resource specs that meet the [Enterprise Security hardware requirements](https://docs.splunk.com/Documentation/ES/latest/Install/DeploymentPlanning#Hardware_requirements).
 * Enterprise Security Version 6.4.1 or 6.6.0 as Splunk Operator requires Splunk Enterprise 8.2.2 or later. For more information regarding Splunk Enterprise and Enterprise Security compatibility, see the [version compatibility matrix](https://docs.splunk.com/Documentation/VersionCompatibility/current/Matrix/CompatMatrix).
+* If installing to an Indexer Cluster, access to the corresponding Splunk_TA_ForIndexers app from the Enterprise Security package (resides in SplunkEnterpriseSecuritySuite/install/splunkcloud/splunk_app_es/Splunk_TA_ForIndexers-<version>.spl). In Indexer Clustering deployments, this app must be deployed to indexer cluster members to ensure they have the proper indexes, props, and transforms configurations. 
 
 
 
@@ -28,7 +29,7 @@ Supported Architectures Include:
 
 Notably, if deploying a distributed search environment, the use of indexer clustering is required to ensure that the necessary Enterprise Security specific configuration is pushed to the indexers via the Cluster Manager.
 
-### What is automated by the Splunk Operator
+### What is and what is not automated by the Splunk Operator
 
 The Splunk Operator will install the necessary Enterprise Security components depending on the architecture specified by the applied CRDs.
 
@@ -39,7 +40,7 @@ For standalones and standalone search heads the Operator will install Splunk Ent
 When installing Enterprise Security in a Search Head Cluster, the Operator will stage ES and all associated DAs and SAs to the Deployer's etc/shcluster/apps directory, and will then push the apps to the Search Head Cluster members. This allows for an admin to [manage Enterprise Security through the deployer](https://docs.splunk.com/Documentation/ES/6.6.2/Install/InstallEnterpriseSecuritySHC#Managing_configuration_changes_in_a_search_head_cluster). 
 
 #### Indexer Cluster
-When installing ES on an indexer cluster the Splunk Operator will utilize the Cluster Manager to generate and distribute the [Splunk_TA_ForIndexers](https://docs.splunk.com/Documentation/ES/latest/Install/InstallTechnologyAdd-ons#Create_the_Splunk_TA_ForIndexers_and_manage_deployment_manually) app to the indexer cluster members. This TA contains indexes, props, and transforms configurations that are necessary for the indexers.
+When installing ES in an indexer clustering environment through the Splunk Operator it is necessary to deploy the supplemental [Splunk_TA_ForIndexers](https://docs.splunk.com/Documentation/ES/latest/Install/InstallTechnologyAdd-ons#Create_the_Splunk_TA_ForIndexers_and_manage_deployment_manually) app from the ES package to the indexer cluster members. This can be achieved using the AppFramework appSources scope of "cluster".
 
 
 ### How to Install Enterprise Security using the Splunk Operator
@@ -51,8 +52,9 @@ When crafting your Custom Resource to create a Splunk Enterprise Deployment it i
 
 ##### [appSources](https://splunk.github.io/splunk-operator/AppFramework.html#appsources) scope
    
-   - When deploying ES to a Standalone or Standalone Search Head, it must be configured with an appSources scope of local.
-   - When deploying ES to a Search Head Cluster or Indexer Cluster, it must be configured with an appSources scope of clusterWithPreConfig.
+   - When deploying ES to a Standalone or Standalone Search Head, it must be configured with an appSources scope of "local".
+   - When deploying ES to a Search Head Cluster, it must be configured with an appSources scope of "clusterWithPreConfig".
+   - When deploying the Splunk_TA_ForIndexers app to an Indexer Cluster, it must be configured with an appSources scope of "cluster".
 
 ##### livenessInitialDelaySeconds 
 As Splunk Enterprise Security is a large app package, it may be necessary to increase the livenessInitialDelaySeconds to allow sufficient time for the apps to be installed.  
@@ -112,7 +114,11 @@ Increasing the value of splunkdConnectionTimeout in web.conf will help ensure th
 
 ### Example YAML
 
-The below yaml will configure ES on a Search Head Cluster which searches an Indexer Cluster. The assumptions made are that the ES app tarball exists in an s3 bucket location named "testfolder".
+The below yaml will configure ES on a Search Head Cluster which searches an Indexer Cluster. 
+
+ Assumptions made are that:
+ 1. The ES app tarball exists in an s3 bucket folder named "esApp"
+ 2. The Splunk_TA_ForIndexers app exists in an s3 bucket folder named "idxcApps"
 ```yaml
 apiVersion: enterprise.splunk.com/v2
 kind: SearchHeadCluster
@@ -123,8 +129,8 @@ metadata:
 spec:
   appRepo:
     appSources:
-    - location: testfolder
-      name: appframework1
+    - location: esApp
+      name: testAppRepo
       scope: clusterWithPreConfig
       volumeName: volname
     appsRepoPollIntervalSeconds: 60
@@ -169,8 +175,8 @@ metadata:
 spec:
   appRepo:
     appSources:
-    - location: testfolder
-      name: appframework1
+    - location: idxcApps
+      name: testAppRepo
       scope: clusterWithPreConfig
       volumeName: volname
     appsRepoPollIntervalSeconds: 60
@@ -213,17 +219,18 @@ spec:
 
 #### Installation steps
 
-All that needs to be done to install Enterprise Security through the Operator is to ensure that the Enterprise Security App package is present in the bucket configured through [AppFramework](https://splunk.github.io/splunk-operator/AppFramework.html) and to apply the specified custom resource(s). 
-
+1. Ensure that the Enterprise Security app tarball is present in the specified AppFramework s3 location with the correct appSources scope. Additionally, if configuring an indexer cluster, ensure that the Splunk_TA_ForIndexers app is present in the ClusterManager AppFramework s3 location with the appSources "cluster" scope.
+   
+2. Apply the specified custom resource(s), the Splunk Operator will handle installation and the environment will be ready to use once all pods are in the "Ready" state.
+   
 **Important Considerations**
-* Installation may take upwards of 30 minutes for Search Head Clustering and Indexer Clustering environments.
+* Installation may take upwards of 30 minutes.
 
-* In indexer clustering environments, it is necessary to also install ES on the Cluster Manager to ensure the proper configurations are pushed to the indexer cluster members.
 
 
 #### Post Installation Configuration
 
-After installing Enterprise Security 
+After installing Enterprise Security :
 
 * [Deploy add-ons to Splunk Enterprise Security](https://docs.splunk.com/Documentation/ES/latest/Install/InstallTechnologyAdd-ons) - Technology add-ons (TAs) which need to be installed to indexers can be installed via AppFramework, while TAs that reside on forwarders will need to be installed manually or via third party configuration management.
 
@@ -238,7 +245,7 @@ After installing Enterprise Security
 
 ### Upgrade Steps
 
-To upgrade ES, all that is required is to move the new ES package into the specified AppFramework bucket. This will initiate a pod reset and begin the process of upgrading the new version.
+To upgrade ES, all that is required is to move the new ES package into the specified AppFramework bucket. This will initiate a pod reset and begin the process of upgrading the new version. In indexer clustering environments, it is also necessary to move the new Splunk_TA_ForIndexers app to the Cluster Manager's AppFramework bucket that deploys apps to cluster members.
 
 * The upgrade process will preserve any knowledge objects that exist in app local directories.
 
@@ -251,11 +258,13 @@ Enterprise Security installation is currently relies on ansible, so the first pl
 kubectl logs <pod_name>
 ```
 Common issues that may be encountered are : 
-* Task timeouts - raise associated timeout (splunkdConnectionTimeout, rcvTimeout, etc.)
+* Ansible task timeouts - raise associated timeout (splunkdConnectionTimeout, rcvTimeout, etc.)
 * Pod Recycles - raise livenessProbe value
 
 
 ### Current Limitations
+
+* For indexer clustering environments, need to manually extract Splunk_TA_ForIndexers app and place in Cluster Manager AppFramework bucket to be deployed to indexers.
 
 * Need to deploy add-ons to forwarders manually (or through your own methods).
 
