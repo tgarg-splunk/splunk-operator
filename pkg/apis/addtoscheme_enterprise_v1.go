@@ -15,7 +15,7 @@
 package apis
 
 import (
-	v1 "github.com/splunk/splunk-operator/pkg/apis/enterprise/v1"
+	v1 "github.com/splunk/splunk-operator/api/v1"
 )
 
 func init() {

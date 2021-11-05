@@ -40,8 +40,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
+	controller "github.com/splunk/splunk-operator/controllers"
 	"github.com/splunk/splunk-operator/pkg/apis"
-	"github.com/splunk/splunk-operator/pkg/controller"
 	"github.com/splunk/splunk-operator/version"
 )
 
