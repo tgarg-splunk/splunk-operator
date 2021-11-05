@@ -150,4 +150,4 @@ install: manifests kustomize
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true"
+CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
