@@ -511,6 +511,70 @@ downloadPhase:
 	}
 }
 
+// runPlaybook implements the playbook for local scoped app install
+func (ctx *localScopeInstallContext) runPlaybook() (string, string, error) {
+	worker := ctx.worker
+	cr := worker.cr
+	scopedLog := log.WithName("localScopeInstallContext.runPlaybook").WithValues("name", cr.GetName(), "namespace", cr.GetNamespace(), "pod", worker.targetPodName, "app name", worker.appDeployInfo.AppName)
+
+	defer func() {
+		// ToDo sgontla: Open the semlock once CSPL-1449 is available
+		//<-ctx.sem
+		worker.isActive = false
+		//worker.waiter.Done()
+	}()
+
+	appPkgFileName := getAppPackageName(worker)
+	appPkgPathOnPod := filepath.Join(appBktMnt, worker.appSrcName, appPkgFileName)
+
+	phaseInfo := getPhaseInfoByPhaseType(worker, enterpriseApi.PhaseInstall)
+
+	if !checkIfFileExistsOnPod(*worker.client, cr.GetNamespace(), worker.targetPodName, appPkgPathOnPod) {
+		scopedLog.Error(nil, "app pkg missing on Pod", "app pkg path", appPkgPathOnPod)
+		phaseInfo.Status = enterpriseApi.AppPkgMissingOnPodError
+
+		return "", "", fmt.Errorf("app pkg missing on Pod. app pkg path: %s", appPkgPathOnPod)
+	}
+
+	var command string
+	if worker.appDeployInfo.IsUpdate {
+		// App was already installed, update scenario
+		command = fmt.Sprintf("/opt/splunk/bin/splunk install app %s -update 1 -auth admin:`cat /mnt/splunk-secrets/password`", appPkgPathOnPod)
+	} else {
+		command = fmt.Sprintf("/opt/splunk/bin/splunk install app %s -auth admin:`cat /mnt/splunk-secrets/password`", appPkgPathOnPod)
+	}
+
+	streamOptions := &remotecommand.StreamOptions{
+		Stdin: strings.NewReader(command),
+	}
+
+	stdOut, stdErr, err := splutil.PodExecCommand(*worker.client, worker.targetPodName, cr.GetNamespace(), []string{"/bin/sh"}, streamOptions, false, false)
+	if stdErr != "" || err != nil {
+		scopedLog.Error(err, "local scoped app package install failed", "stdout", stdOut, "stderr", stdErr, "app pkg path", appPkgPathOnPod)
+		phaseInfo.RetryCount++
+		return stdOut, stdErr, err
+	}
+
+	// Mark the worker for install complete status
+	scopedLog.Info("App pkg installation complete")
+	phaseInfo.Status = enterpriseApi.AppPkgInstallComplete
+	phaseInfo.RetryCount = 0
+
+	// Delete the app package from the target pod /init-apps/ location
+	// ToDo: sgontla: rename the "init-apps" to a different name, as the init-container is going away.
+	command = fmt.Sprintf("rm -f %s", appPkgPathOnPod)
+	streamOptions = &remotecommand.StreamOptions{
+		Stdin: strings.NewReader(command),
+	}
+	stdOut, stdErr, err = splutil.PodExecCommand(*worker.client, worker.targetPodName, cr.GetNamespace(), []string{"/bin/sh"}, streamOptions, false, false)
+	if stdErr != "" || err != nil {
+		scopedLog.Error(err, "app pkg deletion failed", "stdout", stdOut, "stderr", stdErr, "app pkg path", appPkgPathOnPod)
+		return stdOut, stdErr, err
+	}
+
+	return "", "", nil
+}
+
 // extractClusterScopedAppOnPod untars the given app package to the bundle push location
 func extractClusterScopedAppOnPod(worker *PipelineWorker, appSrcScope string, appPkgPathOnPod, appPkgLocalPath string) error {
 	cr := worker.cr
@@ -537,19 +601,15 @@ func extractClusterScopedAppOnPod(worker *PipelineWorker, appSrcScope string, ap
 	}
 
 	stdOut, stdErr, err := splutil.PodExecCommand(*worker.client, worker.targetPodName, cr.GetNamespace(), []string{"/bin/sh"}, streamOptions, false, false)
-	if err != nil {
+	if stdErr != "" || err != nil {
 		scopedLog.Error(err, "app package untar & delete failed", "stdout", stdOut, "stderr", stdErr)
 		return err
 	}
 
 	// Now that the App package was moved to the persistent location on the Pod.
 	// Remove the app package from the Operator storage area
-	// Note:- local scoped app packages are removed once the installation is complete(for all the replica members)
-	err = os.Remove(appPkgLocalPath)
-	if err != nil {
-		// Issue is local, so just log an error msg and do *NOT* return an error here
-		scopedLog.Error(err, "failed to delete", "app pkg", appPkgLocalPath)
-	}
+	// Note:- local scoped app packages are removed once the installation is complete for entire statefulset
+	deleteAppPkgFromOperator(worker)
 
 	return nil
 }
@@ -557,7 +617,7 @@ func extractClusterScopedAppOnPod(worker *PipelineWorker, appSrcScope string, ap
 // runPodCopyWorker runs one pod copy worker
 func runPodCopyWorker(worker *PipelineWorker, ch chan struct{}) {
 	cr := worker.cr
-	scopedLog := log.WithName("runPodCopyWorker").WithValues("name", cr.GetName(), "namespace", cr.GetNamespace(), "app name", worker.appDeployInfo.AppName)
+	scopedLog := log.WithName("runPodCopyWorker").WithValues("name", cr.GetName(), "namespace", cr.GetNamespace(), "app name", worker.appDeployInfo.AppName, "pod", worker.targetPodName)
 	defer func() {
 		<-ch
 		worker.isActive = false
@@ -567,7 +627,7 @@ func runPodCopyWorker(worker *PipelineWorker, ch chan struct{}) {
 	appPkgFileName := worker.appDeployInfo.AppName + "_" + strings.Trim(worker.appDeployInfo.ObjectHash, "\"")
 
 	appSrcScope := getAppSrcScope(worker.afwConfig, worker.appSrcName)
-	appPkgLocalDir := getAppPackageLocalPath(cr, appSrcScope, worker.appSrcName)
+	appPkgLocalDir := getAppPackageLocalDir(cr, appSrcScope, worker.appSrcName)
 	appPkgLocalPath := appPkgLocalDir + appPkgFileName
 
 	// ToDo: sgontla: Don't do redundant checks for the directory existence here.
@@ -599,6 +659,7 @@ func runPodCopyWorker(worker *PipelineWorker, ch chan struct{}) {
 		}
 	}
 
+	scopedLog.Info("podCopy complete", "app pkg path", appPkgPathOnPod)
 	phaseInfo.Status = enterpriseApi.AppPkgPodCopyComplete
 }
 
@@ -735,6 +796,12 @@ installPhase:
 
 		default:
 			for _, installWorker := range pplnPhase.q {
+				appScope := getAppSrcScope(installWorker.afwConfig, installWorker.appSrcName)
+				if enterpriseApi.ScopeLocal != appScope {
+					scopedLog.Error(nil, "Install worker with non-local scope", "name", installWorker.cr.GetName(), "namespace", installWorker.cr.GetNamespace(), "pod name", installWorker.targetPodName, "App name", installWorker.appDeployInfo.AppName, "digest", installWorker.appDeployInfo.ObjectHash, "scope", appScope)
+					continue
+				}
+
 				phaseInfo := getPhaseInfoByPhaseType(installWorker, enterpriseApi.PhaseInstall)
 				if checkIfWorkerIsEligibleForRun(installWorker, phaseInfo, enterpriseApi.AppPkgInstallComplete) {
 					installWorker.waiter = &pplnPhase.workerWaiter
@@ -742,20 +809,45 @@ installPhase:
 					case pplnPhase.msgChannel <- installWorker:
 						scopedLog.Info("Install worker got a run slot", "name", installWorker.cr.GetName(), "namespace", installWorker.cr.GetNamespace(), "pod name", installWorker.targetPodName, "App name", installWorker.appDeployInfo.AppName, "digest", installWorker.appDeployInfo.ObjectHash)
 						installWorker.isActive = true
+
+						// ToDo Start: sgontla: Fix the flow once CSPL-1449 is in place
+						var localInstallCtxt *localScopeInstallContext = &localScopeInstallContext{
+							worker: installWorker,
+							//sem:
+						}
+
+						//installWorker.waiter.Add(1)
+						localInstallCtxt.runPlaybook()
+						// just drain the channel for now, should handle in CSPL-1449
+						//<-pplnPhase.msgChannel
+						// ToDo End: sgontla: Fix the flow once CSPL-1449 is in place
 					default:
 						installWorker.waiter = nil
 					}
 				} else if phaseInfo.Status == enterpriseApi.AppPkgInstallComplete {
-					if installWorker.cr.GetObjectKind().GroupVersionKind().Kind == "Standalone" && isAppInstallationCompleteOnStandaloneReplicas(installWorker.appDeployInfo.AuxPhaseInfo) {
-						installWorker.appDeployInfo.PhaseInfo.Phase = enterpriseApi.PhaseInstall
-						installWorker.appDeployInfo.PhaseInfo.Status = enterpriseApi.AppPkgInstallComplete
-						installWorker.appDeployInfo.DeployStatus = enterpriseApi.DeployStatusComplete
+					var needToDeleteAppFromOperator bool = false
+					if installWorker.cr.GetObjectKind().GroupVersionKind().Kind == "Standalone" {
+						if installWorker.sts != nil && *installWorker.sts.Spec.Replicas > 1 && isAppInstallationCompleteOnStandaloneReplicas(installWorker.appDeployInfo.AuxPhaseInfo) {
+							installWorker.appDeployInfo.PhaseInfo.Phase = enterpriseApi.PhaseInstall
+							installWorker.appDeployInfo.PhaseInfo.Status = enterpriseApi.AppPkgInstallComplete
+							needToDeleteAppFromOperator = true
+						}
+					} else {
+						needToDeleteAppFromOperator = true
 					}
+
+					if needToDeleteAppFromOperator {
+						installWorker.appDeployInfo.DeployStatus = enterpriseApi.DeployStatusComplete
+						deleteAppPkgFromOperator(installWorker)
+					}
+
 					//For now, set the deploy status as complete. Eventually, we can phase it out
 					ppln.deleteWorkerFromPipelinePhase(phaseInfo.Phase, installWorker)
 				} else if phaseInfo.RetryCount >= pipelinePhaseMaxRetryCount {
 					installWorker.appDeployInfo.PhaseInfo.Status = enterpriseApi.AppPkgInstallError
 					ppln.deleteWorkerFromPipelinePhase(phaseInfo.Phase, installWorker)
+				} else if phaseInfo.Status == enterpriseApi.AppPkgMissingOnPodError {
+					ppln.transitionWorkerPhase(installWorker, enterpriseApi.PhaseInstall, enterpriseApi.PhasePodCopy)
 				}
 
 			}
@@ -838,6 +930,27 @@ func initAppInstallPipeline(appDeployContext *enterpriseApi.AppDeploymentContext
 	initPipelinePhase(enterpriseApi.PhaseInstall)
 
 	return afwPipeline
+}
+
+// deleteAppPkgFromOperator removes the app pkg from the Operator Pod
+func deleteAppPkgFromOperator(worker *PipelineWorker) {
+	scopedLog := log.WithName("deleteAppPkgFromOperator").WithValues("name", worker.cr.GetName(), "namespace", worker.cr.GetNamespace(), "app pkg", worker.appDeployInfo.AppName)
+	if afwPipeline == nil {
+		scopedLog.Error(nil, "Pipeline not initialized")
+		return
+	}
+
+	appPkgLocalPath := getAppPackageLocalPath(worker)
+	err := os.Remove(appPkgLocalPath)
+	if err != nil {
+		// Issue is local, so just log an error msg and return
+		// ToDo: sgontla: For any transient errors, handle the clean-up at the end of the install
+		scopedLog.Error(err, "failed to delete app pkg from Operator", "app pkg path", appPkgLocalPath)
+	}
+
+	afwPipeline.pplnMutex.Lock()
+	afwPipeline.availableDiskSpace += worker.appDeployInfo.Size
+	afwPipeline.pplnMutex.Unlock()
 }
 
 func afwGetReleventStatefulsetByKind(cr splcommon.MetaObject, client splcommon.ControllerClient) *appsv1.StatefulSet {
