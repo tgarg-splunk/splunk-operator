@@ -71,7 +71,7 @@ cd splunk-operator
 
 This repository consists of the following code used to build the splunk-operator binary:
 
-* `cmd/manager/main.go`: Provides the main() function, where everything begins
+* `main.go`: Provides the main() function, where everything begins
 * `api/`: Source code for the operator's custom resource definition types
 * `controllers/`: Used to register controllers that watch for changes to custom resources
 * `pkg/splunk/enterprise/`: Source code for controllers that manage Splunk Enterprise resources
@@ -80,11 +80,11 @@ This repository consists of the following code used to build the splunk-operator
 * `pkg/splunk/client/`: Simple client for Splunk Enterprise REST API
 * `pkg/splunk/test/`: Common code used by other packages for unit testing
 
-`main()` uses `pkg/controllers` to register all the `enterprise` controllers
+`main()` uses `controllers` to register all the `enterprise` controllers
 that manage custom resources by watching for Kubernetes events.
 The `enterprise`  controllers are implemented using common code provided
 by the `controllers` package. The `enterprise` controllers also use the REST API client
-provided in the `pkg/splunk/client` package. The types provided by `pkg/apis/` and
+provided in the `pkg/splunk/client` package. The types provided by `api/` and
 common code in the `pkg/splunk/common/` package are used universally. Note that the
 source code for `main()` is generated from a template provided by the Operator SDK.
 
@@ -123,7 +123,7 @@ Other make targets include (more info below):
 Ensure that you have the Custom Resource Definitions installed in your cluster:
 
 ```
-kubectl apply -f deploy/crds
+kubectl apply -f config/crd/bases
 ```
 
 Use this to run the operator as a local foreground process on your machine:
