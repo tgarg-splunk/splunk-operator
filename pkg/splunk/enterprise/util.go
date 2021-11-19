@@ -34,9 +34,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/remotecommand"
+	//"k8s.io/kubectl/pkg/cmd/cp"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	enterpriseApi "github.com/splunk/splunk-operator/pkg/apis/enterprise/v3"
+	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
 	splclient "github.com/splunk/splunk-operator/pkg/splunk/client"
 	splcommon "github.com/splunk/splunk-operator/pkg/splunk/common"
 	splctrl "github.com/splunk/splunk-operator/pkg/splunk/controller"
@@ -44,9 +45,8 @@ import (
 
 	// Used to move files between pods
 	_ "unsafe"
-
-	// Import kubectl cmd cp utils
-	_ "k8s.io/kubernetes/pkg/kubectl/cmd/cp"
+	// Import kubectl cmd cp utils FIXME
+	//_ "k8s.io/kubernetes/pkg/kubectl/cmd/cp"
 )
 
 // kubernetes logger used by splunk.enterprise package
@@ -1545,7 +1545,8 @@ func CopyFileToPod(c splcommon.ControllerClient, namespace string, podName strin
 
 	go func() {
 		defer writer.Close()
-		err := cpMakeTar(srcPath, destPath, writer)
+		//err := cpMakeTar(srcPath, destPath, writer)
+		err := cpMakeTar(localPath{file: srcPath}, remotePath{file: destPath}, writer)
 		if err != nil {
 			scopedLog.Error(err, "Failed to send file on writer pipe", "srcPath", srcPath, "destPath", destPath)
 			return
@@ -1567,7 +1568,7 @@ func CopyFileToPod(c splcommon.ControllerClient, namespace string, podName strin
 }
 
 //go:linkname cpMakeTar k8s.io/kubernetes/pkg/kubectl/cmd/cp.makeTar
-func cpMakeTar(srcPath, destPath string, writer io.Writer) error
+//func cpMakeTar(srcPath, destPath string, writer io.Writer) error
 
 //validateMonitoringConsoleRef validates the changes in monitoringConsoleRef
 func validateMonitoringConsoleRef(c splcommon.ControllerClient, revised *appsv1.StatefulSet, serviceURLs []corev1.EnvVar) error {

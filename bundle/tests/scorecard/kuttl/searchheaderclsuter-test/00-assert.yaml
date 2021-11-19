@@ -1,0 +1,6 @@
+apiVersion: enterprise.splunk.com/v4
+kind: SearchHeadCluster
+metadata:
+  name: searchheadcluster-sample
+status:
+  phase: Ready

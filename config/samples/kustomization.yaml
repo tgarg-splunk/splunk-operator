@@ -1,0 +1,9 @@
+## Append samples you want in your CSV to this file as resources ##
+resources:
+- enterprise_v4_clustermaster.yaml
+- enterprise_v4_indexercluster.yaml
+- enterprise_v4_licensemaster.yaml
+- enterprise_v4_monitoringconsole.yaml
+- enterprise_v4_searchheadcluster.yaml
+- enterprise_v4_standalone.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

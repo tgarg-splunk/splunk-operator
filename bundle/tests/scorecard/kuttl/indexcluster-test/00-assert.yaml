@@ -1,0 +1,6 @@
+apiVersion: enterprise.splunk.com/v4
+kind: IndexCluster
+metadata:
+  name: indexcluster-sample
+status:
+  phase: Ready

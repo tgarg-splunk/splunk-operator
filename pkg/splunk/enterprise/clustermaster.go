@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	enterpriseApi "github.com/splunk/splunk-operator/pkg/apis/enterprise/v3"
+	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/remotecommand"

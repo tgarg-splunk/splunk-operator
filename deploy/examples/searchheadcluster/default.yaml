@@ -1,5 +1,0 @@
-apiVersion: enterprise.splunk.com/v3
-kind: SearchHeadCluster
-metadata:
-  name: test
-spec: {}

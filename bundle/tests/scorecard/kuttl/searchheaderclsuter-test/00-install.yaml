@@ -1,0 +1,5 @@
+apiVersion: enterprise.splunk.com/v4
+kind: Standalone
+metadata:
+  name: standalone-sample
+spec: {}

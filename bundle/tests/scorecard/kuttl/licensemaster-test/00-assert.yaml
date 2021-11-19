@@ -1,0 +1,6 @@
+apiVersion: enterprise.splunk.com/v4
+kind: LicenseMaster
+metadata:
+  name: licensemaster-sample
+status:
+  phase: Ready

@@ -1,0 +1,75 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: splunk-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: ClusterMaster is the Schema for the clustermanagers API
+      displayName: Cluster Master
+      kind: ClusterMaster
+      name: clustermasters.enterprise.splunk.com
+      version: v4
+    - description: IndexerCluster is the Schema for a Splunk Enterprise indexer cluster
+      displayName: Indexer Cluster
+      kind: IndexerCluster
+      name: indexerclusters.enterprise.splunk.com
+      version: v4
+    - description: LicenseMaster is the Schema for a Splunk Enterprise license manager.
+      displayName: License Master
+      kind: LicenseMaster
+      name: licensemasters.enterprise.splunk.com
+      version: v4
+    - description: MonitoringConsole is the Schema for the monitoringconsole API
+      displayName: Monitoring Console
+      kind: MonitoringConsole
+      name: monitoringconsoles.enterprise.splunk.com
+      version: v4
+    - description: SearchHeadCluster is the Schema for the searchheadclusters API
+      displayName: Search Head Cluster
+      kind: SearchHeadCluster
+      name: searchheadclusters.enterprise.splunk.com
+      version: v4
+    - description: Standalone is the Schema for a Splunk Enterprise standalone instances.
+      displayName: Standalone
+      kind: Standalone
+      name: standalones.enterprise.splunk.com
+      version: v4
+  description: Splunk opeator
+  displayName: Splunk Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - splunk
+  - splunk-opeartor
+  - operator
+  links:
+  - name: Splunk Operator
+    url: https://splunk-operator.domain
+  maintainers:
+  - email: sirishm@splunk.com
+    name: sirish mohan
+  maturity: alpha
+  provider:
+    name: Splunk
+    url: https://splunk.github.io/splunk-operator/
+  version: 0.0.0

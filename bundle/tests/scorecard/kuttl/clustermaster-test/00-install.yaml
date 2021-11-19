@@ -1,0 +1,5 @@
+apiVersion: enterprise.splunk.com/v4
+kind: ClusterMaster 
+metadata:
+  name: clustermaster-sample
+spec: {}
