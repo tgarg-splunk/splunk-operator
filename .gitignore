@@ -93,3 +93,4 @@ deploy/olm-certified
 *junit.xml
 # Bias Language Linter
 .biaslanguage/
+bin/
