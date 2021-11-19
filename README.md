@@ -34,7 +34,7 @@ The [Kubernetes Operator SDK](https://github.com/operator-framework/operator-sdk
 must also be installed to build this project.
 
 ```
-git clone -b v0.18.2 https://github.com/operator-framework/operator-sdk
+git clone -b v1.14.0 https://github.com/operator-framework/operator-sdk
 cd operator-sdk
 make tidy
 make install
@@ -72,8 +72,8 @@ cd splunk-operator
 This repository consists of the following code used to build the splunk-operator binary:
 
 * `cmd/manager/main.go`: Provides the main() function, where everything begins
-* `pkg/apis/`: Source code for the operator's custom resource definition types
-* `pkg/controllers/`: Used to register controllers that watch for changes to custom resources
+* `api/`: Source code for the operator's custom resource definition types
+* `controllers/`: Used to register controllers that watch for changes to custom resources
 * `pkg/splunk/enterprise/`: Source code for controllers that manage Splunk Enterprise resources
 * `pkg/splunk/controller/`: Common code shared across Splunk controllers
 * `pkg/splunk/common/`: Common code used by most other splunk packages
