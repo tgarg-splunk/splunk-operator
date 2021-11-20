@@ -1,0 +1,7 @@
+apiVersion: enterprise.splunk.com/v2
+kind: IndexerCluster
+metadata:
+  name: indexercluster-sample
+spec:
+  # Add fields here
+  foo: bar

@@ -1,0 +1,7 @@
+apiVersion: enterprise.splunk.com/v2
+kind: LicenseMaster
+metadata:
+  name: licensemaster-sample
+spec:
+  # Add fields here
+  foo: bar

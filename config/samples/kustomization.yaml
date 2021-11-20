@@ -1,0 +1,7 @@
+## This file is auto-generated, do not modify ##
+resources:
+- enterprise_v2_clustermaster.yaml
+- enterprise_v2_indexercluster.yaml
+- enterprise_v2_licensemaster.yaml
+- enterprise_v2_standalone.yaml
+- enterprise_v2_searchheadcluster.yaml

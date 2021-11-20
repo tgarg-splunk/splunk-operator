@@ -1,0 +1,7 @@
+apiVersion: enterprise.splunk.com/v2
+kind: ClusterMaster
+metadata:
+  name: clustermaster-sample
+spec:
+  # Add fields here
+  foo: bar
