@@ -14,6 +14,7 @@ images
 apibundle
 config
 bundle
+api
 #Below should be reviewed once CRDs have no bias lang
 pkg/
 deploy/
