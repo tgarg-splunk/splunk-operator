@@ -220,3 +220,6 @@ cluster-down:
 int-test:
 	@echo Run integration test
 	@test/run-tests.sh
+
+lint:
+	@golint ./...
