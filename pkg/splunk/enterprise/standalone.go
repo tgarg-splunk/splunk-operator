@@ -32,8 +32,8 @@ import (
 )
 
 // ApplyStandalone reconciles the StatefulSet for N standalone instances of Splunk Enterprise.
-func ApplyStandalone(client splcommon.ControllerClient, cr *enterpriseApi.Standalone) (reconcile.Result, error) {
-
+func ApplyStandalone(ctx context.Context, client splcommon.ControllerClient, cr *enterpriseApi.Standalone) (reconcile.Result, error) {
+	//reqLogger := log.FromContext(ctx)
 	// unless modified, reconcile for this object will be requeued after 5 seconds
 	result := reconcile.Result{
 		Requeue:      true,

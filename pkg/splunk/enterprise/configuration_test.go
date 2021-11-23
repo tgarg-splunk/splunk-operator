@@ -15,6 +15,7 @@
 package enterprise
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -255,7 +256,7 @@ func TestSmartstoreApplyStandaloneFailsOnInvalidSmartStoreConfig(t *testing.T) {
 
 	var client splcommon.ControllerClient
 
-	_, err := ApplyStandalone(client, &cr)
+	_, err := ApplyStandalone(context.Background(), client, &cr)
 	if err == nil {
 		t.Errorf("ApplyStandalone should fail on invalid smartstore config")
 	}

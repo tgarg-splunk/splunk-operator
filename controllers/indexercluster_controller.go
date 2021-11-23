@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -56,6 +57,8 @@ type IndexerClusterReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *IndexerClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// your logic here
+	reconcileCounters.With(getPrometheusLabels(req)).Inc()
+
 	reqLogger := log.FromContext(ctx)
 	reqLogger = reqLogger.WithValues("baremetalhost", req.NamespacedName)
 	reqLogger.Info("start")
@@ -94,5 +97,8 @@ func (r *IndexerClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				IsController: true,
 				OwnerType:    &enterprisev4.SearchHeadCluster{},
 			}).
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: enterprisev4.TotalWroker,
+		}).
 		Complete(r)
 }

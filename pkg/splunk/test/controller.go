@@ -18,21 +18,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+	"testing"
+
 	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
+
+	//"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 
 	splcommon "github.com/splunk/splunk-operator/pkg/splunk/common"
 )
 
 func init() {
 	MockObjectCopiers = append(MockObjectCopiers, coreObjectCopier, appsObjectCopier, enterpriseObjCopier)
+	MockObjectListCopiers = append(MockObjectListCopiers, coreObjectListCopier, enterpriseObjListCopier)
 }
 
 // MockObjectCopiers is a slice of MockObjectCopier methods that MockClient uses to copy client.Objects
@@ -49,25 +53,14 @@ func enterpriseObjCopier(dst, src *client.Object) bool {
 	switch srcP.(type) {
 	case *enterpriseApi.ClusterMaster:
 		*dstP.(*enterpriseApi.ClusterMaster) = *srcP.(*enterpriseApi.ClusterMaster)
-	case *enterpriseApi.Standalone:
-		*dstP.(*enterpriseApi.Standalone) = *srcP.(*enterpriseApi.Standalone)
 	case *enterpriseApi.IndexerCluster:
 		*dstP.(*enterpriseApi.IndexerCluster) = *srcP.(*enterpriseApi.IndexerCluster)
 	case *enterpriseApi.LicenseMaster:
 		*dstP.(*enterpriseApi.LicenseMaster) = *srcP.(*enterpriseApi.LicenseMaster)
+	case *enterpriseApi.Standalone:
+		*dstP.(*enterpriseApi.Standalone) = *srcP.(*enterpriseApi.Standalone)
 	case *enterpriseApi.SearchHeadCluster:
 		*dstP.(*enterpriseApi.SearchHeadCluster) = *srcP.(*enterpriseApi.SearchHeadCluster)
-	/*case *enterpriseApi.ClusterMasterList:
-		*dstP.(*enterpriseApi.ClusterMasterList) = *srcP.(*enterpriseApi.ClusterMasterList)
-	case *enterpriseApi.IndexerClusterList:
-		*dstP.(*enterpriseApi.IndexerClusterList) = *srcP.(*enterpriseApi.IndexerClusterList)
-	case *enterpriseApi.LicenseMasterList:
-		*dstP.(*enterpriseApi.LicenseMasterList) = *srcP.(*enterpriseApi.LicenseMasterList)
-	case *enterpriseApi.SearchHeadClusterList:
-		*dstP.(*enterpriseApi.SearchHeadClusterList) = *srcP.(*enterpriseApi.SearchHeadClusterList)
-	case *enterpriseApi.StandaloneList:
-		*dstP.(*enterpriseApi.StandaloneList) = *srcP.(*enterpriseApi.StandaloneList)
-	*/
 	default:
 		return false
 	}
@@ -92,11 +85,51 @@ func coreObjectCopier(dst, src *client.Object) bool {
 			*dstP.(*corev1.Pod) = *srcP.(*corev1.Pod)
 		case *corev1.ServiceAccount:
 			*dstP.(*corev1.ServiceAccount) = *srcP.(*corev1.ServiceAccount)
-		/*case *corev1.SecretList:
-			*dstP.(*corev1.SecretList) = *srcP.(*corev1.SecretList)
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+// MockObjectCopiers is a slice of MockObjectCopier methods that MockClient uses to copy client.Objects
+var MockObjectListCopiers []MockObjectListCopier
+
+// MockObjectCopier is a method used to perform the typed copy of a client.Object from src to dst.
+// It returns true if the client.Object was copied, or false if the type is unknown.
+type MockObjectListCopier func(dst, src *client.ObjectList) bool
+
+// enterpriseObjListCopier is used to copy enterprise client.Objects
+func enterpriseObjListCopier(dst, src *client.ObjectList) bool {
+	dstP := *dst
+	srcP := *src
+	switch srcP.(type) {
+	case *enterpriseApi.IndexerClusterList:
+		*dstP.(*enterpriseApi.IndexerClusterList) = *srcP.(*enterpriseApi.IndexerClusterList)
+	case *enterpriseApi.LicenseMasterList:
+		*dstP.(*enterpriseApi.LicenseMasterList) = *srcP.(*enterpriseApi.LicenseMasterList)
+	case *enterpriseApi.SearchHeadClusterList:
+		*dstP.(*enterpriseApi.SearchHeadClusterList) = *srcP.(*enterpriseApi.SearchHeadClusterList)
+	case *enterpriseApi.ClusterMasterList:
+		*dstP.(*enterpriseApi.ClusterMasterList) = *srcP.(*enterpriseApi.ClusterMasterList)
+	case *enterpriseApi.StandaloneList:
+		*dstP.(*enterpriseApi.StandaloneList) = *srcP.(*enterpriseApi.StandaloneList)
+	default:
+		return false
+	}
+	return true
+}
+
+// coreObjectListCopier is used to copy corev1 client.ObjectList
+func coreObjectListCopier(dst, src *client.ObjectList) bool {
+	dstP := *dst
+	srcP := *src
+	if reflect.TypeOf(dstP).String() == reflect.TypeOf(*src).String() {
+		switch (srcP).(type) {
 		case *corev1.PersistentVolumeClaimList:
 			*dstP.(*corev1.PersistentVolumeClaimList) = *srcP.(*corev1.PersistentVolumeClaimList)
-		*/
+		case *corev1.SecretList:
+			*dstP.(*corev1.SecretList) = *srcP.(*corev1.SecretList)
 		default:
 			return false
 		}
@@ -126,9 +159,23 @@ func copyMockObject(dst, src *client.Object) {
 			return
 		}
 	}
-	srcP := *src
+	//FIXME
+	//srcP := *src
 	// default if no types match
-	*dst = srcP.DeepCopyObject()
+	//*dst = srcP.DeepCopyObject()
+}
+
+// copyMockObjectList uses the global MockObjectCopiers to perform the typed copy of a client.Object from src to dst
+func copyMockObjectList(dst, src *client.ObjectList) {
+	for n := range MockObjectCopiers {
+		if MockObjectListCopiers[n](dst, src) {
+			return
+		}
+	}
+	//FIXME
+	//srcP := *src
+	// default if no types match
+	//*dst = srcP.DeepCopyObject()
 }
 
 // MockFuncCall is used to record a function call to MockClient methods
@@ -137,6 +184,7 @@ type MockFuncCall struct {
 	Key      client.ObjectKey
 	ListOpts []client.ListOption
 	Obj      client.Object
+	ObjList  client.ObjectList
 	MetaName string
 }
 
@@ -222,12 +270,12 @@ func (c MockClient) List(ctx context.Context, obj client.ObjectList, opts ...cli
 	c.Calls["List"] = append(c.Calls["List"], MockFuncCall{
 		CTX:      ctx,
 		ListOpts: opts,
-		Obj:      obj,
+		ObjList:  obj,
 	})
 	listObj := c.ListObj
 	if listObj != nil {
 		srcObj := listObj
-		copyMockObject(&obj, &srcObj)
+		copyMockObjectList(&obj, &srcObj)
 		return nil
 	}
 	return c.NotFoundError
@@ -325,7 +373,12 @@ func (c *MockClient) CheckCalls(t *testing.T, testname string, wantCalls map[str
 		//t.Fatalf("%s: MockClient %s() calls = %d; want %d, got: %s \n want: %s", testname, methodName, len(gotFuncCalls), len(wantFuncCalls), gotFuncCalls, wantFuncCalls)
 		if len(gotFuncCalls) != len(wantFuncCalls) {
 			//t.Fatalf("%s: MockClient %s() calls = %d; want %d", testname, methodName, len(gotFuncCalls), len(wantFuncCalls))
-			t.Fatalf("%s: MockClient %s() calls = %d; want %d, got: %s \n want: %s", testname, methodName, len(gotFuncCalls), len(wantFuncCalls), gotFuncCalls, wantFuncCalls)
+			//FIXME VIVEK
+			test := []string{}
+			for _, call := range gotFuncCalls {
+				test = append(test, call.Key.String())
+			}
+			t.Fatalf("%s: MockClient %s() calls = %d; want %d, got: %s \n want: %s", testname, methodName, len(gotFuncCalls), len(wantFuncCalls), test, wantFuncCalls)
 		}
 
 		for n := range wantFuncCalls {

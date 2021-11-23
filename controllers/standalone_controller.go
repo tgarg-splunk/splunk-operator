@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,11 +30,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	enterprisev4 "github.com/splunk/splunk-operator/api/v4"
 	enterprise "github.com/splunk/splunk-operator/pkg/splunk/enterprise"
+)
+
+const (
+	pauseRetryDelay = time.Second * 30
 )
 
 // StandaloneReconciler reconciles a Standalone object
@@ -57,6 +63,8 @@ type StandaloneReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *StandaloneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// your logic here
+	reconcileCounters.With(getPrometheusLabels(req)).Inc()
+
 	reqLogger := log.FromContext(ctx)
 	reqLogger = reqLogger.WithValues("baremetalhost", req.NamespacedName)
 	reqLogger.Info("start")
@@ -75,7 +83,16 @@ func (r *StandaloneReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, errors.Wrap(err, "could not load standalone data")
 	}
-	return enterprise.ApplyStandalone(r.Client, instance)
+
+	// If the reconciliation is paused, requeue
+	annotations := instance.GetAnnotations()
+	if annotations != nil {
+		if _, ok := annotations[enterprisev4.StandalonePausedAnnotation]; ok {
+			return ctrl.Result{Requeue: true, RequeueAfter: pauseRetryDelay}, nil
+		}
+	}
+
+	return enterprise.ApplyStandalone(ctx, r.Client, instance)
 	//return ctrl.Result{}, nil
 }
 
@@ -101,5 +118,8 @@ func (r *StandaloneReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				IsController: true,
 				OwnerType:    &enterprisev4.Standalone{},
 			}).
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: enterprisev4.TotalWroker,
+		}).
 		Complete(r)
 }

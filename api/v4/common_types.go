@@ -35,6 +35,11 @@ const (
 
 //CAUTION: Do not change json field tags, otherwise the configuration will not be backward compatible with the existing CRs
 
+const (
+	// Total concurrent workers to reconcile
+	TotalWroker int = 15
+)
+
 // AppRepoState represent the App state on remote store
 type AppRepoState uint8
 

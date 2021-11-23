@@ -23,7 +23,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	//"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
@@ -466,7 +466,7 @@ func TestInvalidPeerInFinishRecycle(t *testing.T) {
 
 func indexerClusterPodManagerUpdateTester(t *testing.T, method string, mockHandlers []spltest.MockHTTPHandler,
 	desiredReplicas int32, wantPhase splcommon.Phase, statefulSet *appsv1.StatefulSet,
-	wantCalls map[string][]spltest.MockFuncCall, wantError error, initObjects ...runtime.Object) {
+	wantCalls map[string][]spltest.MockFuncCall, wantError error, initObjects ...client.Object) {
 	mockSplunkClient := &spltest.MockHTTPClient{}
 	mockSplunkClient.AddHandlers(mockHandlers...)
 	// get indexerClusterPodManager instance
@@ -618,7 +618,7 @@ func TestIndexerClusterPodManager(t *testing.T) {
 }
 
 func TestSetClusterMaintenanceMode(t *testing.T) {
-	var initObjectList []runtime.Object
+	var initObjectList []client.Object
 
 	c := spltest.NewMockClient()
 
@@ -724,7 +724,7 @@ func TestSetClusterMaintenanceMode(t *testing.T) {
 func TestApplyIdxcSecret(t *testing.T) {
 	method := "ApplyIdxcSecret"
 	scopedLog := log.WithName(method)
-	var initObjectList []runtime.Object
+	var initObjectList []client.Object
 
 	c := spltest.NewMockClient()
 

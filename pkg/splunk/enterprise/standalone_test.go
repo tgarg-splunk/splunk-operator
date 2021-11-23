@@ -15,12 +15,14 @@
 package enterprise
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
@@ -70,7 +72,7 @@ func TestApplyStandalone(t *testing.T) {
 	revised := current.DeepCopy()
 	revised.Spec.Image = "splunk/test"
 	reconcile := func(c *spltest.MockClient, cr interface{}) error {
-		_, err := ApplyStandalone(c, cr.(*enterpriseApi.Standalone))
+		_, err := ApplyStandalone(context.Background(), c, cr.(*enterpriseApi.Standalone))
 		return err
 	}
 	spltest.ReconcileTesterWithoutRedundantCheck(t, "TestApplyStandalone", &current, revised, createCalls, updateCalls, reconcile, true)
@@ -80,7 +82,7 @@ func TestApplyStandalone(t *testing.T) {
 	revised.ObjectMeta.DeletionTimestamp = &currentTime
 	revised.ObjectMeta.Finalizers = []string{"enterprise.splunk.com/delete-pvc"}
 	deleteFunc := func(cr splcommon.MetaObject, c splcommon.ControllerClient) (bool, error) {
-		_, err := ApplyStandalone(c, cr.(*enterpriseApi.Standalone))
+		_, err := ApplyStandalone(context.Background(), c, cr.(*enterpriseApi.Standalone))
 		return true, err
 	}
 	splunkDeletionTester(t, revised, deleteFunc)
@@ -153,7 +155,7 @@ func TestApplyStandaloneWithSmartstore(t *testing.T) {
 	client := spltest.NewMockClient()
 
 	// Without S3 keys, ApplyStandalone should fail
-	_, err := ApplyStandalone(client, &current)
+	_, err := ApplyStandalone(context.Background(), client, &current)
 	if err == nil {
 		t.Errorf("ApplyStandalone should fail without S3 secrets configured")
 	}
@@ -174,7 +176,7 @@ func TestApplyStandaloneWithSmartstore(t *testing.T) {
 	revised := current.DeepCopy()
 	revised.Spec.Image = "splunk/test"
 	reconcile := func(c *spltest.MockClient, cr interface{}) error {
-		_, err := ApplyStandalone(c, cr.(*enterpriseApi.Standalone))
+		_, err := ApplyStandalone(context.Background(), c, cr.(*enterpriseApi.Standalone))
 		return err
 	}
 	spltest.ReconcileTesterWithoutRedundantCheck(t, "TestApplyStandaloneWithSmartstore", &current, revised, createCalls, updateCalls, reconcile, true, secret)
@@ -288,7 +290,7 @@ func TestApplyStandaloneSmartstoreKeyChangeDetection(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	_, err = ApplyStandalone(client, &current)
+	_, err = ApplyStandalone(context.Background(), client, &current)
 	if err != nil {
 		t.Errorf("ApplyStandalone should not fail with full configuration")
 	}
@@ -369,7 +371,7 @@ func TestAppFrameworkApplyStandaloneShouldNotFail(t *testing.T) {
 		t.Errorf("Unable to create download directory for apps :%s", splcommon.AppDownloadVolume)
 	}
 
-	_, err = ApplyStandalone(client, &cr)
+	_, err = ApplyStandalone(context.Background(), client, &cr)
 	if err != nil {
 		t.Errorf("ApplyStandalone should be successful")
 	}
@@ -434,14 +436,14 @@ func TestAppFrameworkApplyStandaloneScalingUpShouldNotFail(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unable to create download directory for apps :%s", splcommon.AppDownloadVolume)
 	}
-	_, err = ApplyStandalone(client, &cr)
+	_, err = ApplyStandalone(context.Background(), client, &cr)
 	if err != nil {
 		t.Errorf("ApplyStandalone should be successful")
 	}
 
 	// now scale up
 	cr.Spec.Replicas = 2
-	_, err = ApplyStandalone(client, &cr)
+	_, err = ApplyStandalone(context.Background(), client, &cr)
 	if err != nil {
 		t.Errorf("ApplyStandalone should be successful")
 	}
@@ -858,7 +860,7 @@ func TestApplyStandaloneDeletion(t *testing.T) {
 		t.Errorf("Unable to create download directory for apps :%s", splcommon.AppDownloadVolume)
 	}
 
-	_, err = ApplyStandalone(c, &stand1)
+	_, err = ApplyStandalone(context.Background(), c, &stand1)
 	if err != nil {
 		t.Errorf("ApplyStandalone should not have returned error here.")
 	}
