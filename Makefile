@@ -223,3 +223,34 @@ int-test:
 
 lint:
 	@golint ./...
+
+lang:
+	@echo Running bias language linter
+	@tools/bias_language_linter.sh
+
+stop_clair_scanner:
+	@docker stop clair_db || true
+	@docker rm clair_db || true
+	@docker stop clair || true
+	@docker rm clair || true
+
+setup_clair_scanner: stop_clair_scanner
+	@mkdir -p clair-scanner-logs
+	@docker pull arminc/clair-db:${SCANNER_DATE} || docker pull arminc/clair-db:${SCANNER_DATE_YEST} || echo "WARNING: Failed to pull daily image, defaulting to latest" >> clair-scanner-logs/clair_setup_errors.log ; docker pull arminc/clair-db:latest
+	@docker run -d --name clair_db arminc/clair-db:${SCANNER_DATE} || docker run -d --name clair_db arminc/clair-db:${SCANNER_DATE_YEST} || docker run -d --name clair_db arminc/clair-db:latest
+	@docker run -p 6060:6060 --link clair_db:postgres -d --name clair --restart on-failure arminc/clair-local-scan:v2.0.6
+	@wget https://github.com/arminc/clair-scanner/releases/download/${SCANNER_VERSION}/${SCANNER_FILE}
+	@mv ${SCANNER_FILE} clair-scanner
+	@chmod +x clair-scanner
+	@echo "Waiting for clair daemon to start"
+	@retries=0 ; while( ! wget -T 10 -q -O /dev/null http://0.0.0.0:6060/v1/namespaces ) ; do sleep 1 ; echo -n "." ; if [ $$retries -eq 10 ] ; then echo " Timeout, aborting." ; exit 1 ; fi ; retries=$$(($$retries+1)) ; done
+	@echo "Clair daemon started."
+
+run_clair_scan:
+	@./clair-scanner -c http://0.0.0.0:6060 --ip ${SCANNER_LOCALIP} -r clair-scanner-logs/results.json -l clair-scanner-logs/results.log splunk/splunk-operator
+
+clean: stop_clair_scanner
+	@rm -rf ./build/_output
+	@docker rmi splunk/splunk-operator || true
+	@rm -f clair-scanner
+	@rm -rf clair-scanner-logs
