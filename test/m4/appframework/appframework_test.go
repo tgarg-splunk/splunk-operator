@@ -118,7 +118,7 @@ var _ = Describe("m4appfw test", func() {
 			// Verify Monitoring Console is ready and stays in ready state
 			testenv.VerifyMonitoringConsoleReady(deployment, deployment.GetName(), mc, testenvInstance)
 
-			// Upload V1 apps to S3 for M4 SVA
+			// Upload V1 apps to S3 for M4
 			testenvInstance.Log.Info(fmt.Sprintf("Upload %s apps to S3 for M4", appVersion))
 			s3TestDir = "m4appfw-" + testenv.RandomDNSName(4)
 			uploadedFiles, err = testenv.UploadFilesToS3(testS3Bucket, s3TestDir, appFileList, downloadDirV1)
@@ -311,12 +311,12 @@ var _ = Describe("m4appfw test", func() {
 			*/
 
 			//################## SETUP ##################
-			// Upload V2 version of apps to S3 for M4 SVA
+			// Upload V2 version of apps to S3 for Monitoring Console
 			appVersion := "V2"
 			appFileList := testenv.GetAppFileList(appListV2, 2)
 			testenvInstance.Log.Info(fmt.Sprintf("Upload %s apps to S3 for Monitoring Console", appVersion))
 			s3TestDirMC := "m4appfw-mc-" + testenv.RandomDNSName(4)
-			uploadedFiles, err := testenv.UploadFilesToS3(testS3Bucket, s3TestDir, appFileList, downloadDirV2)
+			uploadedFiles, err := testenv.UploadFilesToS3(testS3Bucket, s3TestDirMC, appFileList, downloadDirV2)
 			Expect(err).To(Succeed(), "Unable to upload newer version of apps for M4 to S3 test directory")
 			uploadedApps = append(uploadedApps, uploadedFiles...)
 
@@ -356,7 +356,7 @@ var _ = Describe("m4appfw test", func() {
 
 			// Upload V2 version of apps to S3 for Monitoring Console
 			testenvInstance.Log.Info(fmt.Sprintf("Upload %s apps to S3 for Monitoring Console", appVersion))
-			s3TestDir = "c3appfw-" + testenv.RandomDNSName(4)
+			s3TestDir = "m4appfw-" + testenv.RandomDNSName(4)
 			uploadedFiles, err = testenv.UploadFilesToS3(testS3Bucket, s3TestDir, appFileList, downloadDirV2)
 			Expect(err).To(Succeed(), fmt.Sprintf("Unable to upload %s apps to S3 test directory for M4", appVersion))
 			uploadedApps = append(uploadedApps, uploadedFiles...)
@@ -774,7 +774,7 @@ var _ = Describe("m4appfw test", func() {
 			//################## SETUP ####################
 			// Upload V1 apps to S3 for M4
 			appVersion := "V1"
-			s3TestDir = "c3appfw-" + testenv.RandomDNSName(4)
+			s3TestDir = "m4appfw-" + testenv.RandomDNSName(4)
 			appFileList := testenv.GetAppFileList(appListV1, 1)
 			testenvInstance.Log.Info(fmt.Sprintf("Upload %s apps to S3 for M4", appVersion))
 			uploadedFiles, err := testenv.UploadFilesToS3(testS3Bucket, s3TestDir, appFileList, downloadDirV1)
