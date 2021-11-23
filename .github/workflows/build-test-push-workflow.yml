@@ -15,7 +15,7 @@ jobs:
     - name: Install golint
       run: |
         go version
-        go get -u golang.org/x/lint/golint
+        go install golang.org/x/lint/golint@latest
     - name: Check Source formatting
       run: X=`make fmt` && if [[ "x$X" != "x" ]]; then echo $X && false; fi
     - name: Lint source code
