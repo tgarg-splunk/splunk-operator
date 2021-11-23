@@ -290,11 +290,10 @@ func (testenv *TestEnv) setup() error {
 		return err
 	}
 
-	/* FIXME TODO VIVEK
 	err = testenv.createOperator()
 	if err != nil {
 		return err
-	} */
+	} 
 
 	// Create s3 secret object for index test
 	testenv.createIndexSecret()
