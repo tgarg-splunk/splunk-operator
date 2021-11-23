@@ -92,11 +92,11 @@ func coreObjectCopier(dst, src *client.Object) bool {
 	return true
 }
 
-// MockObjectCopiers is a slice of MockObjectCopier methods that MockClient uses to copy client.Objects
+// MockObjectListCopiers is a slice of MockObjectListCopier methods that MockClient uses to copy client.ObjectList
 var MockObjectListCopiers []MockObjectListCopier
 
-// MockObjectCopier is a method used to perform the typed copy of a client.Object from src to dst.
-// It returns true if the client.Object was copied, or false if the type is unknown.
+// MockObjectListCopier is a method used to perform the typed copy of a client.ObjectList from src to dst.
+// It returns true if the client.ObjectList was copied, or false if the type is unknown.
 type MockObjectListCopier func(dst, src *client.ObjectList) bool
 
 // enterpriseObjListCopier is used to copy enterprise client.Objects
@@ -236,13 +236,15 @@ type MockClient struct {
 	NotFoundError error
 }
 
+//RESTMapper wrapper for REST Client
 //FIXME
 func (c MockClient) RESTMapper() meta.RESTMapper {
 	ne := &meta.DefaultRESTMapper{}
 	return ne
 }
 
-// FIXME
+//Scheme Wrapper for Scheme client object
+//FIXME
 func (c MockClient) Scheme() *runtime.Scheme {
 	sc := &runtime.Scheme{}
 	return sc

@@ -6,10 +6,11 @@ import (
 )
 
 const (
+	// CustomTest1Name .
 	CustomTest1Name = "customtest1"
 )
 
-// CustomTest1
+// CustomTest1 .
 func CustomTest1(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = CustomTest1Name

@@ -150,7 +150,7 @@ type Testcase struct {
 	Failure *Failure `xml:"failure" json:"failure,omitempty"`
 }
 
-// TestSuite is a collection of Testcase and is a summary of those details
+// Testsuite is a collection of Testcase and is a summary of those details
 type Testsuite struct {
 	// Tests is the number of Testcases in the collection
 	Tests int `xml:"tests,attr" json:"tests"`
