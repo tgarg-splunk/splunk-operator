@@ -119,7 +119,7 @@ func (r *StandaloneReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				OwnerType:    &enterprisev4.Standalone{},
 			}).
 		WithOptions(controller.Options{
-			MaxConcurrentReconciles: enterprisev4.TotalWroker,
+			MaxConcurrentReconciles: enterprisev4.TotalWorker,
 		}).
 		Complete(r)
 }

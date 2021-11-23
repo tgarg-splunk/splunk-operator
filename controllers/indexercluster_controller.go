@@ -98,7 +98,7 @@ func (r *IndexerClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				OwnerType:    &enterprisev4.SearchHeadCluster{},
 			}).
 		WithOptions(controller.Options{
-			MaxConcurrentReconciles: enterprisev4.TotalWroker,
+			MaxConcurrentReconciles: enterprisev4.TotalWorker,
 		}).
 		Complete(r)
 }

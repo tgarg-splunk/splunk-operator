@@ -3618,10 +3618,32 @@ spec:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
       status: {}
-  - name: v4
+  - additionalPrinterColumns:
+    - description: Status of search head cluster
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    - description: Status of the deployer
+      jsonPath: .status.deployerPhase
+      name: Deployer
+      type: string
+    - description: Desired number of search head cluster members
+      jsonPath: .status.replicas
+      name: Desired
+      type: integer
+    - description: Current number of ready search head cluster members
+      jsonPath: .status.readyReplicas
+      name: Ready
+      type: integer
+    - description: Age of search head cluster
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v4
     schema:
       openAPIV3Schema:
-        description: SearchHeadCluster is the Schema for the searchheadclusters API
+        description: SearchHeadCluster is the Schema for a Splunk Enterprise search
+          head cluster
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -7191,6 +7213,10 @@ spec:
     served: true
     storage: false
     subresources:
+      scale:
+        labelSelectorPath: .status.selector
+        specReplicasPath: .spec.replicas
+        statusReplicasPath: .status.replicas
       status: {}
 status:
   acceptedNames:

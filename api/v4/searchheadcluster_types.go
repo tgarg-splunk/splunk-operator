@@ -108,21 +108,8 @@ type SearchHeadClusterStatus struct {
 	AppContext AppDeploymentContext `json:"appContext"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
-// SearchHeadCluster is the Schema for the searchheadclusters API
-type SearchHeadCluster struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   SearchHeadClusterSpec   `json:"spec,omitempty"`
-	Status SearchHeadClusterStatus `json:"status,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // SearchHeadCluster is the Schema for a Splunk Enterprise search head cluster
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:shortName=sh;shead
 // +kubebuilder:subresource:status
@@ -133,6 +120,17 @@ type SearchHeadCluster struct {
 // +kubebuilder:printcolumn:name="Desired",type="integer",JSONPath=".status.replicas",description="Desired number of search head cluster members"
 // +kubebuilder:printcolumn:name="Ready",type="integer",JSONPath=".status.readyReplicas",description="Current number of ready search head cluster members"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Age of search head cluster"
+type SearchHeadCluster struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   SearchHeadClusterSpec   `json:"spec,omitempty"`
+	Status SearchHeadClusterStatus `json:"status,omitempty"`
+}
+
+//+kubebuilder:object:root=true
+
+// SearchHeadClusterList contains a list of SearchHeadCluster
 type SearchHeadClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
