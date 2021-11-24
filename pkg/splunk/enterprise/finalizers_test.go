@@ -134,7 +134,7 @@ func splunkDeletionTester(t *testing.T, cr splcommon.MetaObject, delete func(spl
 			mockCalls["Get"] = []spltest.MockFuncCall{
 				{MetaName: "*v1.Secret-test-splunk-test-secret"},
 				{MetaName: "*v1.Secret-test-splunk-test-secret"},
-				{MetaName: "*v3.ClusterMaster-test-master1"},
+				{MetaName: "*v4.ClusterMaster-test-master1"},
 				{MetaName: "*v1.Secret-test-splunk-test-secret"},
 			}
 		}
