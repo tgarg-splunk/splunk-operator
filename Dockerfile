@@ -23,8 +23,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-RUN useradd -ms /bin/bash nonroot -u 1000
-RUN yum -y install iputils
+ENV OPERATOR=/usr/local/bin/splunk-operator \
+    USER_UID=1001 \
+    USER_NAME=splunk-operator
 
 LABEL name="splunk" \
       maintainer="support@splunk.com" \
@@ -35,7 +36,7 @@ LABEL name="splunk" \
       description="The Splunk Operator for Kubernetes (SOK) makes it easy for Splunk Administrators to deploy and operate Enterprise deployments in a Kubernetes infrastructure. Packaged as a container, it uses the operator pattern to manage Splunk-specific custom resources, following best practices to manage all the underlying Kubernetes objects for you."
 
 WORKDIR /
-RUN mkdir /licenses && /usr/local/bin/user_setup
+RUN mkdir /licenses 
 
 COPY --from=builder /workspace/manager .
 COPY tools/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf /licenses
