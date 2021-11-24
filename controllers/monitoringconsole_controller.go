@@ -30,7 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	
 	enterprisev4 "github.com/splunk/splunk-operator/api/v4"
 	enterprise "github.com/splunk/splunk-operator/pkg/splunk/enterprise"
 )
@@ -44,6 +45,16 @@ type MonitoringConsoleReconciler struct {
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=monitoringconsoles,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=monitoringconsoles/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=monitoringconsoles/finalizers,verbs=update
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=services/finalizers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=events,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -98,6 +109,9 @@ func (r *MonitoringConsoleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&handler.EnqueueRequestForOwner{
 				IsController: true,
 				OwnerType:    &enterprisev4.Standalone{},
+			}).
+			WithOptions(controller.Options{
+				MaxConcurrentReconciles: enterprisev4.TotalWorker,
 			}).
 		Complete(r)
 }

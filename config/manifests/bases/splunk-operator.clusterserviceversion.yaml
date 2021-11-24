@@ -66,10 +66,10 @@ spec:
   - name: Splunk Operator
     url: https://splunk-operator.domain
   maintainers:
-  - email: sirishm@splunk.com
-    name: sirish mohan
+  - email: docker-maint@splunk.com
+    name: Splunk Docker Maintainers
   maturity: alpha
   provider:
     name: Splunk
-    url: https://splunk.github.io/splunk-operator/
-  version: 0.0.0
+    url: www.splunk.com
+  version: 1.0.4

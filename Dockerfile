@@ -42,6 +42,6 @@ COPY --from=builder /workspace/manager .
 COPY tools/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf /licenses
 COPY LICENSE /licenses/LICENSE-2.0.txt
 
-USER nonroot:nonroot
+USER 1001
 
 ENTRYPOINT ["/manager"]
