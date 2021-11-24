@@ -58,7 +58,7 @@ fi
 
 # Install the CRDs
 echo "Installing enterprise CRDs..."
-kubectl replace -f ${topdir}/config/crd/bases
+kubectl apply -f ${topdir}/config/crd/bases
 if [ $? -ne 0 ]; then
   echo "Unable to install the CRDs. Exiting..."
   exit 1
