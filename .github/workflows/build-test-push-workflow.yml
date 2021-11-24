@@ -17,7 +17,7 @@ jobs:
         go version
         go install golang.org/x/lint/golint@latest
     - name: Check Source formatting
-      run: X=`make fmt` && if [[ "x$X" != "xgo fmt ./..." ]]; then echo $X && false; fi
+      run: X=`make fmt` && if [[ $? -ne 0 ]]; then false; fi
     - name: Lint source code
       run: X=`make lint` && if [[ "x$X" != "x" ]]; then echo $X && false; fi
   unit-tests:
