@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.16 as builder
+FROM golang:1.17 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -13,7 +13,8 @@ RUN go mod download
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
-COPY pkg pkg/
+COPY pkg/ pkg/
+COPY tools/ tools/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
@@ -22,9 +23,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-ENV OPERATOR=/usr/local/bin/splunk-operator \
-    USER_UID=1001 \
-    USER_NAME=splunk-operator
+RUN useradd -ms /bin/bash nonroot -u 1000
+RUN yum -y install iputils
 
 LABEL name="splunk" \
       maintainer="support@splunk.com" \
@@ -37,11 +37,10 @@ LABEL name="splunk" \
 WORKDIR /
 RUN mkdir /licenses && /usr/local/bin/user_setup
 
-COPY --from=builder /workspace/manager /usr/local/bin
-#USER 65532:65532
+COPY --from=builder /workspace/manager .
 COPY tools/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf /licenses
 COPY LICENSE /licenses/LICENSE-2.0.txt
 
-ENTRYPOINT ["/usr/local/bin/manager"]
+USER nonroot:nonroot
 
-USER ${USER_UID}
+ENTRYPOINT ["/manager"]
