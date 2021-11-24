@@ -37,12 +37,12 @@ func TestApplyIndexerCluster(t *testing.T) {
 	funcCalls := []spltest.MockFuncCall{
 		{MetaName: "*v1.Secret-test-splunk-test-secret"},
 		{MetaName: "*v1.Secret-test-splunk-test-secret"},
-		{MetaName: "*v3." + splcommon.TestClusterManager1},
+		{MetaName: "*v4." + splcommon.TestClusterManager1},
 		{MetaName: "*v1.Service-test-splunk-stack1-indexer-headless"},
 		{MetaName: "*v1.Service-test-splunk-stack1-indexer-service"},
 		{MetaName: "*v1.Secret-test-splunk-test-secret"},
 		{MetaName: "*v1.Secret-test-splunk-stack1-indexer-secret-v1"},
-		{MetaName: "*v3." + splcommon.TestClusterManager1},
+		{MetaName: "*v4." + splcommon.TestClusterManager1},
 		{MetaName: "*v1.Secret-test-splunk-test-secret"},
 	}
 
