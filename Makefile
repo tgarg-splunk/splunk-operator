@@ -86,7 +86,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test  -coverprofile cover.out  ./controllers/... github.com/splunk/splunk-operator/pkg/splunk/common github.com/splunk/splunk-operator/pkg/splunk/enterprise github.com/splunk/splunk-operator/pkg/splunk/controller github.com/splunk/splunk-operator/pkg/splunk/client github.com/splunk/splunk-operator/pkg/splunk/util
 
 ##@ Build
 
