@@ -51,7 +51,6 @@ type LicenseMasterStatus struct {
 
 // LicenseMaster is the Schema for a Splunk Enterprise license manager.
 // +k8s:openapi-gen=true
-// +kubebuilder:resource:shortName=lm
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=licensemasters,scope=Namespaced,shortName=lm
 // +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="Status of license manager"

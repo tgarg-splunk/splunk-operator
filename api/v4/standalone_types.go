@@ -73,7 +73,6 @@ type StandaloneStatus struct {
 
 // Standalone is the Schema for a Splunk Enterprise standalone instances.
 // +k8s:openapi-gen=true
-// +kubebuilder:resource:shortName=st
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas,selectorpath=.status.selector
 // +kubebuilder:resource:path=standalones,scope=Namespaced,shortName=stdaln

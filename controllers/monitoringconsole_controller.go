@@ -73,7 +73,7 @@ func (r *MonitoringConsoleReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	reqLogger = reqLogger.WithValues("monitoringconsole", req.NamespacedName)
 	reqLogger.Info("start")
 
-	// Fetch the MonitoringConsole 
+	// Fetch the MonitoringConsole
 	instance := &enterprisev4.MonitoringConsole{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {

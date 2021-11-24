@@ -106,7 +106,6 @@ type IndexerClusterStatus struct {
 
 // IndexerCluster is the Schema for a Splunk Enterprise indexer cluster
 // +k8s:openapi-gen=true
-// +kubebuilder:resource:shortName=ic
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas,selectorpath=.status.selector
 // +kubebuilder:resource:path=indexerclusters,scope=Namespaced,shortName=idc;idxc

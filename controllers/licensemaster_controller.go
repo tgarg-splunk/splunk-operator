@@ -73,7 +73,7 @@ func (r *LicenseMasterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	reqLogger = reqLogger.WithValues("licensemaster", req.NamespacedName)
 	reqLogger.Info("start")
 
-	// Fetch the LicenseMaster 
+	// Fetch the LicenseMaster
 	instance := &enterprisev4.LicenseMaster{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
@@ -95,7 +95,7 @@ func (r *LicenseMasterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return ctrl.Result{Requeue: true, RequeueAfter: pauseRetryDelay}, nil
 		}
 	}
-	
+
 	return enterprise.ApplyLicenseManager(r.Client, instance)
 }
 

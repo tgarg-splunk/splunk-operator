@@ -95,7 +95,7 @@ func (r *SearchHeadClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			return ctrl.Result{Requeue: true, RequeueAfter: pauseRetryDelay}, nil
 		}
 	}
-	
+
 	return enterprise.ApplySearchHeadCluster(r.Client, instance)
 }
 

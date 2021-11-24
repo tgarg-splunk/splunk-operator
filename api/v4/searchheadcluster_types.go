@@ -117,7 +117,6 @@ type SearchHeadClusterStatus struct {
 // SearchHeadCluster is the Schema for a Splunk Enterprise search head cluster
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +k8s:openapi-gen=true
-// +kubebuilder:resource:shortName=sh;shead
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas,selectorpath=.status.selector
 // +kubebuilder:resource:path=searchheadclusters,scope=Namespaced,shortName=shc
