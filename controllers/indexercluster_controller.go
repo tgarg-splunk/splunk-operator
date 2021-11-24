@@ -70,10 +70,10 @@ func (r *IndexerClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	reconcileCounters.With(getPrometheusLabels(req)).Inc()
 
 	reqLogger := log.FromContext(ctx)
-	reqLogger = reqLogger.WithValues("baremetalhost", req.NamespacedName)
+	reqLogger = reqLogger.WithValues("indexcluster", req.NamespacedName)
 	reqLogger.Info("start")
 
-	// Fetch the BareMetalHost
+	// Fetch the IndexCluster
 	instance := &enterprisev4.IndexerCluster{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
@@ -87,6 +87,15 @@ func (r *IndexerClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, errors.Wrap(err, "could not load standalone data")
 	}
+
+	// If the reconciliation is paused, requeue
+	annotations := instance.GetAnnotations()
+	if annotations != nil {
+		if _, ok := annotations[enterprisev4.IndexerClusterPausedAnnotation]; ok {
+			return ctrl.Result{Requeue: true, RequeueAfter: pauseRetryDelay}, nil
+		}
+	}
+
 	return enterprise.ApplyIndexerCluster(r.Client, instance)
 }
 

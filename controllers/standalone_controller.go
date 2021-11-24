@@ -76,10 +76,10 @@ func (r *StandaloneReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	reconcileCounters.With(getPrometheusLabels(req)).Inc()
 
 	reqLogger := log.FromContext(ctx)
-	reqLogger = reqLogger.WithValues("baremetalhost", req.NamespacedName)
+	reqLogger = reqLogger.WithValues("standalone", req.NamespacedName)
 	reqLogger.Info("start")
 
-	// Fetch the BareMetalHost
+	// Fetch the Standalone
 	instance := &enterprisev4.Standalone{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {

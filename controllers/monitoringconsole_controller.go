@@ -26,12 +26,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	
+
 	enterprisev4 "github.com/splunk/splunk-operator/api/v4"
 	enterprise "github.com/splunk/splunk-operator/pkg/splunk/enterprise"
 )
@@ -67,11 +67,13 @@ type MonitoringConsoleReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *MonitoringConsoleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// your logic here
+	reconcileCounters.With(getPrometheusLabels(req)).Inc()
+
 	reqLogger := log.FromContext(ctx)
-	reqLogger = reqLogger.WithValues("baremetalhost", req.NamespacedName)
+	reqLogger = reqLogger.WithValues("monitoringconsole", req.NamespacedName)
 	reqLogger.Info("start")
 
-	// Fetch the BareMetalHost
+	// Fetch the MonitoringConsole 
 	instance := &enterprisev4.MonitoringConsole{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
@@ -85,6 +87,15 @@ func (r *MonitoringConsoleReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, errors.Wrap(err, "could not load standalone data")
 	}
+
+	// If the reconciliation is paused, requeue
+	annotations := instance.GetAnnotations()
+	if annotations != nil {
+		if _, ok := annotations[enterprisev4.MonitoringConsolePausedAnnotation]; ok {
+			return ctrl.Result{Requeue: true, RequeueAfter: pauseRetryDelay}, nil
+		}
+	}
+
 	return enterprise.ApplyMonitoringConsole(r.Client, instance)
 }
 
@@ -110,8 +121,8 @@ func (r *MonitoringConsoleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				IsController: true,
 				OwnerType:    &enterprisev4.Standalone{},
 			}).
-			WithOptions(controller.Options{
-				MaxConcurrentReconciles: enterprisev4.TotalWorker,
-			}).
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: enterprisev4.TotalWorker,
+		}).
 		Complete(r)
 }

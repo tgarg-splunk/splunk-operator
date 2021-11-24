@@ -70,10 +70,10 @@ func (r *SearchHeadClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	reconcileCounters.With(getPrometheusLabels(req)).Inc()
 
 	reqLogger := log.FromContext(ctx)
-	reqLogger = reqLogger.WithValues("baremetalhost", req.NamespacedName)
+	reqLogger = reqLogger.WithValues("searchheadcluster", req.NamespacedName)
 	reqLogger.Info("start")
 
-	// Fetch the BareMetalHost
+	// Fetch the SearchHeadCluster
 	instance := &enterprisev4.SearchHeadCluster{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
@@ -87,6 +87,15 @@ func (r *SearchHeadClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, errors.Wrap(err, "could not load standalone data")
 	}
+
+	// If the reconciliation is paused, requeue
+	annotations := instance.GetAnnotations()
+	if annotations != nil {
+		if _, ok := annotations[enterprisev4.SearchHeadClusterPausedAnnotation]; ok {
+			return ctrl.Result{Requeue: true, RequeueAfter: pauseRetryDelay}, nil
+		}
+	}
+	
 	return enterprise.ApplySearchHeadCluster(r.Client, instance)
 }
 

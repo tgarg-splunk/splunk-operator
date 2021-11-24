@@ -22,6 +22,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// MonitoringConsolePausedAnnotation is the annotation that pauses the reconciliation (triggers
+	// an immediate requeue)
+	MonitoringConsolePausedAnnotation = "monitoringconsole.enterprise.splunk.com/paused"
+)
+
 //MonitoringConsoleSpec .
 type MonitoringConsoleSpec struct {
 	CommonSplunkSpec `json:",inline"`

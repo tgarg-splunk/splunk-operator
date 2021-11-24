@@ -25,6 +25,12 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const (
+	// SearchHeadClusterPausedAnnotation is the annotation that pauses the reconciliation (triggers
+	// an immediate requeue)
+	SearchHeadClusterPausedAnnotation = "searchheadcluster.enterprise.splunk.com/paused"
+)
+
 // SearchHeadClusterSpec defines the desired state of a Splunk Enterprise search head cluster
 type SearchHeadClusterSpec struct {
 	CommonSplunkSpec `json:",inline"`
