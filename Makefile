@@ -53,6 +53,22 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+
+
+# Security Scanner Variables
+SCANNER_DATE := `date +%Y-%m-%d`
+SCANNER_DATE_YEST := `TZ=GMT+24 +%Y:%m:%d`
+SCANNER_VERSION := v8
+SCANNER_LOCALIP := $(shell ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | awk '{print $1}' | head -n 1)
+ifeq ($(shell uname), Linux)
+	SCANNER_FILE = clair-scanner_linux_amd64
+else ifeq ($(shell uname), Darwin)
+	SCANNER_FILE = clair-scanner_darwin_amd64
+else
+	SCANNER_FILE = clair-scanner_windows_amd64.exe
+endif
+
+
 all: build
 
 ##@ General
