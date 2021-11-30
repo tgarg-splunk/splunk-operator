@@ -8,5 +8,5 @@ roleRef:
   name: proxy-role
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
-  namespace: system
+  name: {{ include "splunk-operator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
