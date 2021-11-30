@@ -22,3 +22,4 @@ test/
 docs/
 README.md
 build/make_bundle.sh
+helm-chart/
