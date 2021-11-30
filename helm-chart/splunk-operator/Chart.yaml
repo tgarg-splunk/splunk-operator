@@ -1,0 +1,15 @@
+apiVersion: v2
+name: splunk-operator
+description: Splunk Operator for Splunk Platform
+home: https://splunk.github.io/splunk-operator
+sources:
+  - https://github.com/splunk/splunk-operator
+type: application
+version: 1.0.4
+appVersion: "1.0.4"
+keywords:
+- splunk
+- operator
+- logs
+maintainers:
+  - name: support@splunk.com

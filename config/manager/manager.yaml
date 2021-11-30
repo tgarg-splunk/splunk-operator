@@ -32,10 +32,10 @@ spec:
         image: controller:latest
         name: manager
         env:
-        - name: WATCH_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
+        #- name: WATCH_NAMESPACE
+        #  valueFrom:
+        #    fieldRef:
+        #      fieldPath: metadata.namespace
         - name: POD_NAME
           valueFrom:
             fieldRef:
@@ -65,5 +65,12 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+        volumeMounts:
+          - mountPath: /opt/splunk/appframework/
+            name: app-staging
       serviceAccountName: controller-manager
+      volumes:
+        - name:  app-staging
+          persistentVolumeClaim:
+            claimName: tmp-app-download
       terminationGracePeriodSeconds: 10
