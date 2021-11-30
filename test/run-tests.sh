@@ -30,12 +30,12 @@ if [ -n "${PRIVATE_REGISTRY}" ]; then
     fi
   fi
 
-  docker tag ${SPLUNK_OPERATOR_IMAGE} ${PRIVATE_SPLUNK_OPERATOR_IMAGE}
-  docker push ${PRIVATE_SPLUNK_OPERATOR_IMAGE}
-  if [ $? -ne 0 ]; then
-    echo "Unable to push ${PRIVATE_SPLUNK_OPERATOR_IMAGE}. Exiting..."
-    exit 1
-  fi
+  #docker tag ${SPLUNK_OPERATOR_IMAGE} ${PRIVATE_SPLUNK_OPERATOR_IMAGE}
+  #docker push ${PRIVATE_SPLUNK_OPERATOR_IMAGE}
+  #if [ $? -ne 0 ]; then
+  #  echo "Unable to push ${PRIVATE_SPLUNK_OPERATOR_IMAGE}. Exiting..."
+  #  exit 1
+  #fi
 
   # Always attempt to pull splunk enterprise image
   docker pull ${SPLUNK_ENTERPRISE_IMAGE}
@@ -58,7 +58,8 @@ fi
 
 # Install the CRDs
 echo "Installing enterprise CRDs..."
-kubectl create -f ${topdir}/config/crd/bases
+make deploy IMG=${PRIVATE_SPLUNK_OPERATOR_IMAGE}
+#kubectl create -f ${topdir}/config/crd/bases
 if [ $? -ne 0 ]; then
   echo "Unable to install the CRDs. Exiting..."
   exit 1
