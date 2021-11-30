@@ -94,3 +94,4 @@ deploy/olm-certified
 # Bias Language Linter
 .biaslanguage/
 bin/
+pkg/splunk/enterprise/app1.tgz_
