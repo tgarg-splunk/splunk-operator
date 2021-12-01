@@ -109,17 +109,17 @@ func (r *MonitoringConsoleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&source.Kind{Type: &appsv1.StatefulSet{}},
 			&handler.EnqueueRequestForOwner{
 				IsController: true,
-				OwnerType:    &enterprisev4.SearchHeadCluster{},
+				OwnerType:    &enterprisev4.MonitoringConsole{},
 			}).
 		Watches(&source.Kind{Type: &corev1.Secret{}},
 			&handler.EnqueueRequestForOwner{
 				IsController: true,
-				OwnerType:    &enterprisev4.SearchHeadCluster{},
+				OwnerType:    &enterprisev4.MonitoringConsole{},
 			}).
 		Watches(&source.Kind{Type: &corev1.ConfigMap{}},
 			&handler.EnqueueRequestForOwner{
 				IsController: true,
-				OwnerType:    &enterprisev4.Standalone{},
+				OwnerType:    &enterprisev4.MonitoringConsole{},
 			}).
 		WithOptions(controller.Options{
 			MaxConcurrentReconciles: enterprisev4.TotalWorker,

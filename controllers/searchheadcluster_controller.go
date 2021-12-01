@@ -119,7 +119,7 @@ func (r *SearchHeadClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&source.Kind{Type: &corev1.ConfigMap{}},
 			&handler.EnqueueRequestForOwner{
 				IsController: true,
-				OwnerType:    &enterprisev4.Standalone{},
+				OwnerType:    &enterprisev4.SearchHeadCluster{},
 			}).
 		WithOptions(controller.Options{
 			MaxConcurrentReconciles: enterprisev4.TotalWorker,

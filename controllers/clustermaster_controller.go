@@ -109,12 +109,12 @@ func (r *ClusterMasterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&source.Kind{Type: &appsv1.StatefulSet{}},
 			&handler.EnqueueRequestForOwner{
 				IsController: true,
-				OwnerType:    &enterprisev4.SearchHeadCluster{},
+				OwnerType:    &enterprisev4.ClusterMaster{},
 			}).
 		Watches(&source.Kind{Type: &corev1.Secret{}},
 			&handler.EnqueueRequestForOwner{
 				IsController: true,
-				OwnerType:    &enterprisev4.SearchHeadCluster{},
+				OwnerType:    &enterprisev4.ClusterMaster{},
 			}).
 		WithOptions(controller.Options{
 			MaxConcurrentReconciles: enterprisev4.TotalWorker,
