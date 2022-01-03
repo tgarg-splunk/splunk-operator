@@ -113,10 +113,10 @@ Other make targets include (more info below):
 * `make docker-build`: builds `splunk-operator` container with the given label (example `make docker-build IMG=docker.io/splunk/splunk-operator:1.1.0`)
 * `make docker-push`: specified docker image will be pushed to docker repository (example `make docker-push IMG=docker.io/splunk/splunk-operator:1.1.0`)
 * `make bundle`: builds `splunk-operator-bundle` i.e package your operator for OLM
-* `make budle-build`: builds `splunk-operator-bundle` container with the given label (example `make bundle-build IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/vivekbasappa/splunk-operator:1.1.0`)
-* `make bundle-push`: specified docker bundle image will be pushed to docker repository (example `make bundle-push IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/vivekbasappa/splunk-operator:1.1.0`)
-* `make catalog-build`: builds `splunk-operator-catalog` container with the given label (example `make catalog-build IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/vivekbasappa/splunk-operator:1.1.0`) for more information https://olm.operatorframework.io/docs/tasks/creating-a-catalog/
-* `make catalog-push`: specified docker cataglog image will be pushed to docker repository (example `make catalog-push IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/vivekbasappa/splunk-operator:1.1.0`)
+* `make budle-build`: builds `splunk-operator-bundle` container with the given label (example `make bundle-build IMAGE_TAG_BASE=docker.io/splunk/splunk-operator VERSION=1.1.0 IMG=docker.io/splunk/splunk-operator:1.1.0`)
+* `make bundle-push`: specified docker bundle image will be pushed to docker repository (example `make bundle-push IMAGE_TAG_BASE=docker.io/splunk/splunk-operator VERSION=1.1.0 IMG=docker.io/splunk/splunk-operator:1.1.0`)
+* `make catalog-build`: builds `splunk-operator-catalog` container with the given label (example `make catalog-build IMAGE_TAG_BASE=docker.io/splunk/splunk-operator VERSION=1.1.0 IMG=docker.io/splunk/splunk-operator:1.1.0`) for more information https://olm.operatorframework.io/docs/tasks/creating-a-catalog/
+* `make catalog-push`: specified docker cataglog image will be pushed to docker repository (example `make catalog-push IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/splunk/splunk-operator:1.1.0`)
 
 
 ## Running the Splunk Operator
