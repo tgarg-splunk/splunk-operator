@@ -34,7 +34,7 @@ The [Kubernetes Operator SDK](https://github.com/operator-framework/operator-sdk
 must also be installed to build this project.
 
 ```
-git clone -b v1.14.0 https://github.com/operator-framework/operator-sdk
+git clone -b v1.15.0 https://github.com/operator-framework/operator-sdk
 cd operator-sdk
 make tidy
 make install
@@ -90,8 +90,8 @@ source code for `main()` is generated from a template provided by the Operator S
 
 In addition to the source code, this repository includes:
 
-* `build`: Build scripts, templates, etc. used to build the container image
-* `deploy`: Kubernetes YAML templates used to install the Splunk Operator
+* `tools`: Build scripts, templates, etc. used to build the container image
+* `config/crds`: Kubernetes YAML templates used to install the Splunk Operator
 * `docs`: Getting Started Guide and other documentation in Markdown format
 * `test`: Integration test framework built using Ginko. See [docs](test/README.md) for more info.
 
@@ -102,20 +102,21 @@ You can build the operator by just running `make`.
 
 Other make targets include (more info below):
 
-* `make all`: builds `splunk/splunk-operator` container image (same as `make image`)
-* `make builder`: builds the `splunk/splunk-operator-builder` container image
-* `make builder-image`: builds `splunk/splunk-operator` using the `splunk/splunk-operator-builder` image
-* `make builder-test`: Runs unit tests using the `splunk/splunk-operator-builder` image
-* `make image`: builds the `splunk/splunk-operator` container image without using `splunk/splunk-operator-builder`
-* `make local`: builds the splunk-operator-local binary for test and debugging purposes
+* `make all`: builds `bin/manager` executable
 * `make test`: Runs unit tests with Coveralls code coverage output to coverage.out
-* `make scorecard`: Runs operator-sdk scorecard tests using OLM installation bundle
 * `make generate`: runs operator-generate k8s, crds and csv commands, updating installation YAML files and OLM bundle
 * `make package`: generates tarball of the `splunk/splunk-operator` container image and installation YAML file
 * `make clean`: removes the binary build output and `splunk/splunk-operator` container image
 * `make run`: runs the splunk operator locally, monitoring the Kubernetes cluster configured in your current `kubectl` context
 * `make fmt`: runs `go fmt` on all `*.go` source files in this project
 * `make lint`: runs the `golint` utility on all `*.go` source files in this project
+* `make docker-build`: builds `splunk-operator` container with the given label (example `make docker-build IMG=docker.io/splunk/splunk-operator:1.1.0`)
+* `make docker-push`: specified docker image will be pushed to docker repository (example `make docker-push IMG=docker.io/splunk/splunk-operator:1.1.0`)
+* `make bundle`: builds `splunk-operator-bundle` i.e package your operator for OLM
+* `make budle-build`: builds `splunk-operator-bundle` container with the given label (example `make bundle-build IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/vivekbasappa/splunk-operator:1.1.0`)
+* `make bundle-push`: specified docker bundle image will be pushed to docker repository (example `make bundle-push IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/vivekbasappa/splunk-operator:1.1.0`)
+* `make catalog-build`: builds `splunk-operator-catalog` container with the given label (example `make catalog-build IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/vivekbasappa/splunk-operator:1.1.0`) for more information https://olm.operatorframework.io/docs/tasks/creating-a-catalog/
+* `make catalog-push`: specified docker cataglog image will be pushed to docker repository (example `make catalog-push IMAGE_TAG_BASE=docker.io/vivekbasappa/splunk-operator VERSION=1.1.0 IMG=docker.io/vivekbasappa/splunk-operator:1.1.0`)
 
 
 ## Running the Splunk Operator
