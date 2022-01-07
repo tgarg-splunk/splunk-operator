@@ -180,6 +180,11 @@ jobs:
           unzip awscli-bundle.zip
           sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
           aws --version
+      - name: Install Kube-Prometheus
+        run: |
+          kubectl apply --server-side -f manifests/setup
+          until kubectl get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
+          kubectl apply -f manifests/
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
