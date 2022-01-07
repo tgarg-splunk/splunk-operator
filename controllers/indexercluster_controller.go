@@ -46,6 +46,10 @@ type IndexerClusterReconciler struct {
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=indexerclusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=indexerclusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=indexerclusters/finalizers,verbs=update
+//+kubebuilder:rbac:groups=enterprise.splunk.com,resources=clustermasters,verbs=get;list;watch
+//+kubebuilder:rbac:groups=enterprise.splunk.com,resources=clustermasters/status,verbs=get
+
+// RBAC Management
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=services/finalizers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
@@ -57,6 +61,34 @@ type IndexerClusterReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+
+// OpenShift
+// +kubebuilder:rbac:groups=quota.openshift.io,resources=clusterresourcequotas,verbs=get;list
+// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=restricted,verbs=use
+
+// +kubebuilder:rbac:urls=/metrics,verbs=get
+// +kubebuilder:rbac:groups="",resources=componentstatuses,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=nodes/metrics,verbs=get
+// +kubebuilder:rbac:groups="",resources=nodes/proxy,verbs=get
+// +kubebuilder:rbac:groups="",resources=nodes/spec,verbs=get
+// +kubebuilder:rbac:groups="",resources=nodes/stats,verbs=get
+// +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
+
+// Compliance
+// +kubebuilder:rbac:groups=policy,resources=podsecuritypolicies,verbs=get;list;watch
+
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -113,6 +145,7 @@ func (r *IndexerClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			common.StatefulsetChangedPredicate(),
 			common.PodChangedPredicate(),
 			common.ConfigMapChangedPredicate(),
+			common.ClusterMasterStatusChangedPredicate(),
 		)).
 		Watches(&source.Kind{Type: &appsv1.StatefulSet{}},
 			&handler.EnqueueRequestForOwner{
@@ -134,6 +167,8 @@ func (r *IndexerClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				IsController: false,
 				OwnerType:    &enterprisev3.IndexerCluster{},
 			}).
+		Watches(&source.Kind{Type: &enterprisev3.ClusterMaster{}},
+			&handler.EnqueueRequestForObject{}).
 		WithOptions(controller.Options{
 			MaxConcurrentReconciles: enterprisev3.TotalWorker,
 		}).

@@ -26,7 +26,11 @@ removeCRDs() {
 				kubectl patch $CRD $CR  -n $NAMESPACE --type="merge" -p '{"metadata": {"finalizers": null}}' -o yaml > /dev/null 2>&1
 				kubectl delete $CRD $CR  -n $NAMESPACE --timeout 20s || true
 			done
-			kubectl delete namespace $NAMESPACE --timeout 5s || true
+			kubectl delete events -n $NAMESPACE --all --timeout 60s || true
+			if [ $NAMESPACE != "default" ] 
+			then
+				kubectl delete namespace $NAMESPACE --timeout 5s || true
+			fi
 		done
 		#echo "Patch and Remove CRD: $CRD"
 		#kubectl patch crds $CRD --type="merge" -p '{"metadata": {"finalizers": null}}' -o yaml > /dev/null 2>&1

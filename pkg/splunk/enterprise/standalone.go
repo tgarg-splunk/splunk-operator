@@ -187,6 +187,9 @@ func ApplyStandalone(ctx context.Context, client splcommon.ControllerClient, cr 
 		return result, err
 	}
 	cr.Status.Phase = phase
+	if cr.Status.Phase == splcommon.PhasePending {
+		result.Requeue = false
+	}
 
 	// no need to requeue if everything is ready
 	if cr.Status.Phase == splcommon.PhaseReady {

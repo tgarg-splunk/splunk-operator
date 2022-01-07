@@ -162,6 +162,10 @@ func ApplySearchHeadCluster(ctx context.Context, client splcommon.ControllerClie
 	}
 	cr.Status.Phase = phase
 
+	if cr.Status.Phase == splcommon.PhasePending {
+		result.Requeue = false
+	}
+
 	if cr.Status.AppContext.AppsSrcDeployStatus != nil && cr.Status.DeployerPhase == splcommon.PhaseReady {
 		markAppsStatusToComplete(client, cr, &cr.Spec.AppFrameworkConfig, cr.Status.AppContext.AppsSrcDeployStatus)
 		// Schedule one more reconcile in next 5 seconds, just to cover any latest app framework config changes
