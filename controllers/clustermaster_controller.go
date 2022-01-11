@@ -42,7 +42,6 @@ type ClusterMasterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=clustermasters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=clustermasters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=enterprise.splunk.com,resources=clustermasters/finalizers,verbs=update
@@ -85,7 +84,6 @@ type ClusterMasterReconciler struct {
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 // Compliance
 // +kubebuilder:rbac:groups=policy,resources=podsecuritypolicies,verbs=get;list;watch
-
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

@@ -86,7 +86,6 @@ type MonitoringConsoleReconciler struct {
 // Compliance
 // +kubebuilder:rbac:groups=policy,resources=podsecuritypolicies,verbs=get;list;watch
 
-
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
