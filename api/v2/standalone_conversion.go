@@ -12,22 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: Boilerplate only.  Ignore this file.
-
-// Package v2 contains API Schema definitions for the enterprise v2 API group
-// +k8s:deepcopy-gen=package,register
-// +groupName=enterprise.splunk.com
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/scheme"
+	"github.com/splunk/splunk-operator/api/v3"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-var (
-	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: "enterprise.splunk.com", Version: "v2"}
-
-	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
-	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
-)
+// ConvertTo converts this Memcached to the Hub version (vbeta1).
+func (src *Standalone) ConvertTo(dstRaw conversion.Hub) error {
+	dst := dstRaw.(*v3.ClusterMaster)
+	dst.ObjectMeta = src.ObjectMeta
+	return nil
+}
