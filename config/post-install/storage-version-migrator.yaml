@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+   name: storage-version-migration
+   namespace: system
+   labels:
+     app: "storage-version-migration"
+spec:
+   ttlSecondsAfterFinished: 600
+   backoffLimit: 10
+   template:
+     metadata:
+       labels:
+         app: "storage-version-migration"
+     spec:
+       serviceAccountName: splunk-operator-post-install-job
+       restartPolicy: OnFailure
+       containers:
+          - name: migrate
+            image: docker.io/houshengbo/migrate:0.0.2
+            args:
+               - "splunks.enterprise.splunk.com"

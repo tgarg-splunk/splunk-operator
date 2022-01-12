@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	enterprisev2 "github.com/splunk/splunk-operator/api/v2"
 	enterprisev3 "github.com/splunk/splunk-operator/api/v3"
 	"github.com/splunk/splunk-operator/controllers"
 	debug "github.com/splunk/splunk-operator/controllers/debug"
@@ -49,6 +50,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(enterprisev3.AddToScheme(scheme))
+	utilruntime.Must(enterprisev2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -133,6 +135,30 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Standalone")
+		os.Exit(1)
+	}
+	if err = (&enterprisev3.ClusterMaster{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterMaster")
+		os.Exit(1)
+	}
+	if err = (&enterprisev3.IndexerCluster{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "IndexerCluster")
+		os.Exit(1)
+	}
+	if err = (&enterprisev3.IndexerCluster{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "IndexerCluster")
+		os.Exit(1)
+	}
+	if err = (&enterprisev3.LicenseMaster{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "LicenseMaster")
+		os.Exit(1)
+	}
+	if err = (&enterprisev3.SearchHeadCluster{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "SearchHeadCluster")
+		os.Exit(1)
+	}
+	if err = (&enterprisev3.Standalone{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Standalone")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

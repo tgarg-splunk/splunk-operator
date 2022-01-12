@@ -1,0 +1,6 @@
+apiVersion: enterprise.splunk.com/v2
+kind: SearchHeadCluster
+metadata:
+  name: searchheadcluster-sample
+spec:
+  # Add fields here

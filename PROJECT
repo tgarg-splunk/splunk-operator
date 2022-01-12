@@ -16,6 +16,9 @@ resources:
   kind: ClusterMaster
   path: github.com/splunk/splunk-operator/api/v3
   version: v3
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -25,6 +28,9 @@ resources:
   kind: IndexerCluster
   path: github.com/splunk/splunk-operator/api/v3
   version: v3
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -34,6 +40,9 @@ resources:
   kind: LicenseMaster
   path: github.com/splunk/splunk-operator/api/v3
   version: v3
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -52,6 +61,9 @@ resources:
   kind: SearchHeadCluster
   path: github.com/splunk/splunk-operator/api/v3
   version: v3
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -61,4 +73,55 @@ resources:
   kind: Standalone
   path: github.com/splunk/splunk-operator/api/v3
   version: v3
+  webhooks:
+    conversion: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: splunk.com
+  group: enterprise
+  kind: ClusterMaster
+  path: github.com/splunk/splunk-operator/api/v2
+  version: v2
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: splunk.com
+  group: enterprise
+  kind: IndexerCluster
+  path: github.com/splunk/splunk-operator/api/v2
+  version: v2
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: splunk.com
+  group: enterprise
+  kind: LicenseMaster
+  path: github.com/splunk/splunk-operator/api/v2
+  version: v2
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: splunk.com
+  group: enterprise
+  kind: MonitoringConsole
+  path: github.com/splunk/splunk-operator/api/v2
+  version: v2
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: splunk.com
+  group: enterprise
+  kind: SearchHeadCluster
+  path: github.com/splunk/splunk-operator/api/v2
+  version: v2
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: splunk.com
+  group: enterprise
+  kind: Standalone
+  path: github.com/splunk/splunk-operator/api/v2
+  version: v2
 version: "3"
