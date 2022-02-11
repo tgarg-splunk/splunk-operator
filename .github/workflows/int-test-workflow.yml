@@ -4,6 +4,7 @@ on:
     branches:
       - develop
       - master
+      - vivek-develop-testing
 jobs:
   int-tests:
     strategy:
