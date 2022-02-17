@@ -129,7 +129,7 @@ jobs:
     needs: vulnerability-scan
     strategy:
       matrix:
-        test: [basic, appframework, secret, monitoringconsole]
+        test: [ appframework]
     runs-on: ubuntu-latest
     env:
       CLUSTER_NODES: 1

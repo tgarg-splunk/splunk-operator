@@ -57,7 +57,7 @@ var _ = Describe("s1appfw test", func() {
 		}
 	})
 
-	Context("Standalone deployment (S1) with App Framework", func() {
+	XContext("Standalone deployment (S1) with App Framework", func() {
 		It("smoke, s1, appframework: can deploy a Standalone instance with App Framework enabled, install apps then upgrade them", func() {
 
 			/* Test Steps
@@ -206,7 +206,7 @@ var _ = Describe("s1appfw test", func() {
 		})
 	})
 
-	Context("Standalone deployment (S1) with App Framework", func() {
+	XContext("Standalone deployment (S1) with App Framework", func() {
 		It("smoke, s1, appframework: can deploy a Standalone instance with App Framework enabled, install apps then downgrade them", func() {
 
 			/* Test Steps
@@ -353,7 +353,7 @@ var _ = Describe("s1appfw test", func() {
 		})
 	})
 
-	Context("Standalone deployment (S1) with App Framework", func() {
+	XContext("Standalone deployment (S1) with App Framework", func() {
 		It("s1, integration, appframework: can deploy a Standalone instance with App Framework enabled, install apps, scale up, install apps on new pod, scale down", func() {
 
 			/* Test Steps
@@ -547,7 +547,7 @@ var _ = Describe("s1appfw test", func() {
 		})
 	})
 
-	Context("Standalone deployment (S1) with App Framework", func() {
+	XContext("Standalone deployment (S1) with App Framework", func() {
 		It("s1, integration, appframework: can deploy a Standalone and have ES app installed", func() {
 
 			/* Test Steps
@@ -609,7 +609,7 @@ var _ = Describe("s1appfw test", func() {
 		})
 	})
 
-	Context("Standalone deployment (S1) with App Framework", func() {
+	XContext("Standalone deployment (S1) with App Framework", func() {
 		It("integration, s1, appframework: can deploy a Standalone instance with App Framework enabled and install around 350MB of apps at once", func() {
 
 			/* Test Steps
