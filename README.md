@@ -113,7 +113,7 @@ Other make targets include (more info below):
 make deploy IMG=docker.io/splunk/splunk-operator:1.1.0
 ```
 
-If user wants to deploy operator for specific namespace then he has to pass `WATCH_NAMESPACE` parameter to `make deploy` command 
+If user wants to deploy operator for specific namespace then they has to pass `WATCH_NAMESPACE` parameter to `make deploy` command 
  
 ```
 make deploy IMG=docker.io/splunk/splunk-operator:1.1.0 WATCH_NAMESPACE="namespace1"

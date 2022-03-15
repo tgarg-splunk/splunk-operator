@@ -199,7 +199,7 @@ delete_operator() {
 
 deploy_operator() {
     echo "--------------------------------------------------------------"
-    echo "installing splunk operator 1.1.0....." 
+    echo "installing splunk operator 1.1.0....."
     kubectl apply -f ${manifest_file}
     echo "--------------------------------------------------------------"
     echo "deployment new splunk opearator 1.1.0 complete"
