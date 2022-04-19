@@ -50,7 +50,7 @@ func ApplySearchHeadCluster(ctx context.Context, client splcommon.ControllerClie
 	eventPublisher, _ := newK8EventPublisher(client, cr)
 
 	// validate and updates defaults for CR
-	err := validateSearchHeadClusterSpec(ctx, cr)
+	err := validateSearchHeadClusterSpec(ctx, client, cr)
 	if err != nil {
 		return result, err
 	}
@@ -394,7 +394,7 @@ func ApplyShcSecret(ctx context.Context, mgr *searchHeadClusterPodManager, repli
 	*/
 	if len(mgr.cr.Status.AdminPasswordChangedSecrets) > 0 {
 		for podSecretName := range mgr.cr.Status.AdminPasswordChangedSecrets {
-			podSecret, err := splutil.GetSecretByName(ctx, mgr.c, mgr.cr, podSecretName)
+			podSecret, err := splutil.GetSecretByName(ctx, mgr.c, mgr.cr.GetNamespace(), mgr.cr.GetName(), podSecretName)
 			if err != nil {
 				return fmt.Errorf("could not read secret %s, reason - %v", podSecretName, err)
 			}
@@ -619,7 +619,7 @@ func getDeployerStatefulSet(ctx context.Context, client splcommon.ControllerClie
 }
 
 // validateSearchHeadClusterSpec checks validity and makes default updates to a SearchHeadClusterSpec, and returns error if something is wrong.
-func validateSearchHeadClusterSpec(ctx context.Context, cr *enterpriseApi.SearchHeadCluster) error {
+func validateSearchHeadClusterSpec(ctx context.Context, c splcommon.ControllerClient, cr *enterpriseApi.SearchHeadCluster) error {
 	if cr.Spec.Replicas < 3 {
 		cr.Spec.Replicas = 3
 	}
@@ -631,7 +631,7 @@ func validateSearchHeadClusterSpec(ctx context.Context, cr *enterpriseApi.Search
 		}
 	}
 
-	return validateCommonSplunkSpec(&cr.Spec.CommonSplunkSpec)
+	return validateCommonSplunkSpec(ctx, c, &cr.Spec.CommonSplunkSpec, cr)
 }
 
 // helper function to get the list of SearchHeadCluster types in the current namespace

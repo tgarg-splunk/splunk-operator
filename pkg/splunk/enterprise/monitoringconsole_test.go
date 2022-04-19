@@ -331,7 +331,7 @@ func TestGetMonitoringConsoleStatefulSet(t *testing.T) {
 
 	test := func(want string) {
 		f := func() (interface{}, error) {
-			if err := validateMonitoringConsoleSpec(ctx, &cr); err != nil {
+			if err := validateMonitoringConsoleSpec(ctx, c, &cr); err != nil {
 				t.Errorf("validateMonitoringConsoleSpec() returned error: %v", err)
 			}
 			return getMonitoringConsoleStatefulSet(ctx, c, &cr)

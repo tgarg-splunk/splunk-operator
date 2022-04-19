@@ -52,7 +52,7 @@ func ApplyClusterManager(ctx context.Context, client splcommon.ControllerClient,
 	}
 
 	// validate and updates defaults for CR
-	err := validateClusterManagerSpec(ctx, cr)
+	err := validateClusterManagerSpec(ctx, client, cr)
 	if err != nil {
 		return result, err
 	}
@@ -232,7 +232,7 @@ func (mgr *clusterManagerPodManager) getClusterManagerClient(cr *enterpriseApi.C
 }
 
 // validateClusterMasterSpec checks validity and makes default updates to a ClusterMasterSpec, and returns error if something is wrong.
-func validateClusterManagerSpec(ctx context.Context, cr *enterpriseApi.ClusterMaster) error {
+func validateClusterManagerSpec(ctx context.Context, c splcommon.ControllerClient, cr *enterpriseApi.ClusterMaster) error {
 
 	if !reflect.DeepEqual(cr.Status.SmartStore, cr.Spec.SmartStore) {
 		err := ValidateSplunkSmartstoreSpec(ctx, &cr.Spec.SmartStore)
@@ -248,7 +248,7 @@ func validateClusterManagerSpec(ctx context.Context, cr *enterpriseApi.ClusterMa
 		}
 	}
 
-	return validateCommonSplunkSpec(&cr.Spec.CommonSplunkSpec)
+	return validateCommonSplunkSpec(ctx, c, &cr.Spec.CommonSplunkSpec, cr)
 }
 
 // getClusterManagerStatefulSet returns a Kubernetes StatefulSet object for a Splunk Enterprise license manager.
@@ -352,7 +352,7 @@ func PushManagerAppsBundle(ctx context.Context, c splcommon.ControllerClient, cr
 	eventPublisher, _ := newK8EventPublisher(c, cr)
 
 	defaultSecretObjName := splcommon.GetNamespaceScopedSecretName(cr.GetNamespace())
-	defaultSecret, err := splutil.GetSecretByName(ctx, c, cr, defaultSecretObjName)
+	defaultSecret, err := splutil.GetSecretByName(ctx, c, cr.GetNamespace(), cr.GetName(), defaultSecretObjName)
 	if err != nil {
 		eventPublisher.Warning(ctx, "PushManagerAppsBundle", fmt.Sprintf("Could not access default secret object to fetch admin password. Reason %v", err))
 		return fmt.Errorf("Could not access default secret object to fetch admin password. Reason %v", err)

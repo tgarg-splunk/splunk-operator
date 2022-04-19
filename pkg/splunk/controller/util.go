@@ -101,11 +101,21 @@ func MergePodSpecUpdates(ctx context.Context, current *corev1.PodSpec, revised *
 		result = true
 	}
 
+	// check for changes in Tolerations
 	if splcommon.CompareTolerations(current.Tolerations, revised.Tolerations) {
 		scopedLog.Info("Pod Tolerations differs",
 			"current", current.Tolerations,
 			"revised", revised.Tolerations)
 		current.Tolerations = revised.Tolerations
+		result = true
+	}
+
+	// check for changes in ImagePullSecrets
+	if splcommon.CompareImagePullSecrets(current.ImagePullSecrets, revised.ImagePullSecrets) {
+		scopedLog.Info("Pod ImagePullSecrets differs",
+			"current", current.ImagePullSecrets,
+			"revised", revised.ImagePullSecrets)
+		current.ImagePullSecrets = revised.ImagePullSecrets
 		result = true
 	}
 
@@ -217,6 +227,9 @@ func SortStatefulSetSlices(ctx context.Context, current *corev1.PodSpec, name st
 
 	// Sort volumes
 	splcommon.SortSlice(current.Volumes, splcommon.SortFieldName)
+
+	// Sort ImagePullSecrets
+	splcommon.SortSlice(current.ImagePullSecrets, splcommon.SortFieldName)
 
 	// Sort slices inside container specs
 	for idx := range current.Containers {

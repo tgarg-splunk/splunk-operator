@@ -1121,7 +1121,7 @@ func TestGetIndexerStatefulSet(t *testing.T) {
 	cr.Spec.ClusterMasterRef.Name = "master1"
 	test := func(want string) {
 		f := func() (interface{}, error) {
-			if err := validateIndexerClusterSpec(ctx, &cr); err != nil {
+			if err := validateIndexerClusterSpec(ctx, c, &cr); err != nil {
 				t.Errorf("validateIndexerClusterSpec() returned error: %v", err)
 			}
 			return getIndexerStatefulSet(ctx, c, &cr)
@@ -1164,7 +1164,7 @@ func TestGetIndexerStatefulSet(t *testing.T) {
 	test(splcommon.TestGetIndexerStatefulSettest5)
 
 	cr.Spec.ClusterMasterRef.Namespace = "other"
-	if err := validateIndexerClusterSpec(ctx, &cr); err == nil {
+	if err := validateIndexerClusterSpec(ctx, c, &cr); err == nil {
 		t.Errorf("validateIndexerClusterSpec() error expected on multisite IndexerCluster referencing a cluster manager located in a different namespace")
 	}
 }

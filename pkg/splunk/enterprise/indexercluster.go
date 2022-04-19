@@ -54,7 +54,7 @@ func ApplyIndexerCluster(ctx context.Context, client splcommon.ControllerClient,
 	eventPublisher, _ := newK8EventPublisher(client, cr)
 
 	// validate and updates defaults for CR
-	err := validateIndexerClusterSpec(ctx, cr)
+	err := validateIndexerClusterSpec(ctx, client, cr)
 	if err != nil {
 		return result, err
 	}
@@ -400,7 +400,7 @@ func ApplyIdxcSecret(ctx context.Context, mgr *indexerClusterPodManager, replica
 	if len(mgr.cr.Status.IdxcPasswordChangedSecrets) > 0 {
 		for podSecretName := range mgr.cr.Status.IdxcPasswordChangedSecrets {
 			if mgr.cr.Status.IdxcPasswordChangedSecrets[podSecretName] {
-				podSecret, err := splutil.GetSecretByName(ctx, mgr.c, mgr.cr, podSecretName)
+				podSecret, err := splutil.GetSecretByName(ctx, mgr.c, mgr.cr.GetNamespace(), mgr.cr.GetName(), podSecretName)
 				if err != nil {
 					return fmt.Errorf("could not read secret %s, reason - %v", podSecretName, err)
 				}
@@ -681,7 +681,7 @@ func getIndexerStatefulSet(ctx context.Context, client splcommon.ControllerClien
 }
 
 // validateIndexerClusterSpec checks validity and makes default updates to a IndexerClusterSpec, and returns error if something is wrong.
-func validateIndexerClusterSpec(ctx context.Context, cr *enterpriseApi.IndexerCluster) error {
+func validateIndexerClusterSpec(ctx context.Context, c splcommon.ControllerClient, cr *enterpriseApi.IndexerCluster) error {
 	// We cannot have 0 replicas in IndexerCluster spec, since this refers to number of indexers in an indexer cluster
 	if cr.Spec.Replicas == 0 {
 		cr.Spec.Replicas = 1
@@ -696,7 +696,7 @@ func validateIndexerClusterSpec(ctx context.Context, cr *enterpriseApi.IndexerCl
 	if len(cr.Spec.ClusterMasterRef.Namespace) > 0 && cr.Spec.ClusterMasterRef.Namespace != cr.GetNamespace() {
 		return fmt.Errorf("multisite cluster does not support cluster manager to be located in a different namespace")
 	}
-	return validateCommonSplunkSpec(&cr.Spec.CommonSplunkSpec)
+	return validateCommonSplunkSpec(ctx, c, &cr.Spec.CommonSplunkSpec, cr)
 }
 
 // helper function to get the list of IndexerCluster types in the current namespace
