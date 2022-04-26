@@ -144,6 +144,17 @@ func MergePodSpecUpdates(ctx context.Context, current *corev1.PodSpec, revised *
 			"revised", len(revised.InitContainers))
 		current.InitContainers = revised.InitContainers
 		result = true
+	} else {
+		for idx := range current.InitContainers {
+			// check Image
+			if current.InitContainers[idx].Image != revised.InitContainers[idx].Image {
+				scopedLog.Info("Init Container Images differ",
+					"current", current.InitContainers[idx].Image,
+					"revised", revised.InitContainers[idx].Image)
+				current.InitContainers[idx].Image = revised.InitContainers[idx].Image
+				result = true
+			}
+		}
 	}
 
 	// check for changes in container images; assume that the ordering is same for pods with > 1 container
