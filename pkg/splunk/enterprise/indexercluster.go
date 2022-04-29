@@ -445,7 +445,7 @@ func (mgr *indexerClusterPodManager) Update(ctx context.Context, c splcommon.Con
 			return enterpriseApi.PhaseError, err
 		}
 	} else {
-		mgr.log.Error(err, "Cluster Manager is not ready yet")
+		mgr.log.Info("Cluster Manager is not ready yet", "reason ", err)
 	}
 
 	// Get the podExecClient with empty targetPodName.
@@ -460,7 +460,7 @@ func (mgr *indexerClusterPodManager) Update(ctx context.Context, c splcommon.Con
 	// update CR status with IDXC information
 	err = mgr.updateStatus(ctx, statefulSet)
 	if err != nil || mgr.cr.Status.ReadyReplicas == 0 || !mgr.cr.Status.Initialized || !mgr.cr.Status.IndexingReady || !mgr.cr.Status.ServiceReady {
-		mgr.log.Error(err, "Indexer cluster is not ready")
+		mgr.log.Info("Indexer cluster is not ready", "reason ", err)
 		return enterpriseApi.PhasePending, nil
 	}
 
