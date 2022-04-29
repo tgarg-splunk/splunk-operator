@@ -691,7 +691,7 @@ func DeleteOwnerReferencesForResources(ctx context.Context, client splcommon.Con
 // remote volume end points
 func DeleteOwnerReferencesForS3SecretObjects(ctx context.Context, client splcommon.ControllerClient, cr splcommon.MetaObject, smartstore *enterpriseApi.SmartStoreSpec) error {
 	reqLogger := log.FromContext(ctx)
-	scopedLog := reqLogger.WithName("DeleteOwnerReferencesForS3Secrets").WithValues("kind", cr.GetObjectKind().GroupVersionKind().Kind, "name", cr.GetName(), "namespace", cr.GetNamespace())
+	scopedLog := reqLogger.WithName("DeleteOwnerReferencesForS3SecretObjects").WithValues("kind", cr.GetObjectKind().GroupVersionKind().Kind, "name", cr.GetName(), "namespace", cr.GetNamespace())
 
 	var err error = nil
 	if !isSmartstoreConfigured(smartstore) {
@@ -700,11 +700,13 @@ func DeleteOwnerReferencesForS3SecretObjects(ctx context.Context, client splcomm
 
 	volList := smartstore.VolList
 	for _, volume := range volList {
-		_, err = splutil.RemoveSecretOwnerRef(ctx, client, volume.SecretRef, cr)
-		if err == nil {
-			scopedLog.Info("Success", "Removed references for Secret Object %s", volume.SecretRef)
-		} else {
-			scopedLog.Error(err, "Owner reference removal failed for Secret Object %s", volume.SecretRef)
+		if volume.SecretRef != "" {
+			_, err = splutil.RemoveSecretOwnerRef(ctx, client, volume.SecretRef, cr)
+			if err == nil {
+				scopedLog.Info("Removed references for Secret Object", "secret", volume.SecretRef)
+			} else {
+				scopedLog.Error(err, fmt.Sprintf("Owner reference removal failed for Secret Object %s", volume.SecretRef))
+			}
 		}
 	}
 
