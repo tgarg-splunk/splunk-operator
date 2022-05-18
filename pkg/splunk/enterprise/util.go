@@ -1727,7 +1727,7 @@ func setInstallStateForClusterScopedApps(ctx context.Context, appDeployContext *
 func getAdminPasswordFromSecret(ctx context.Context, client splcommon.ControllerClient, cr splcommon.MetaObject) ([]byte, error) {
 	// get the admin password from the namespace scoped secret
 	defaultSecretObjName := splcommon.GetNamespaceScopedSecretName(cr.GetNamespace())
-	defaultSecret, err := splutil.GetSecretByName(ctx, client, cr, defaultSecretObjName)
+	defaultSecret, err := splutil.GetSecretByName(ctx, client, cr.GetNamespace(), cr.GetName(), defaultSecretObjName)
 	if err != nil {
 		return nil, fmt.Errorf("could not access default secret object to fetch admin password. Reason %v", err)
 	}
