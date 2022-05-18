@@ -1331,7 +1331,7 @@ func TestIndexerClusterWitReadyState(t *testing.T) {
 		},
 		Spec: enterpriseApi.ClusterMasterSpec{
 			CommonSplunkSpec: enterpriseApi.CommonSplunkSpec{
-				Spec: splcommon.Spec{
+				Spec: enterpriseApi.Spec{
 					ImagePullPolicy: "Always",
 				},
 				Volumes: []corev1.Volume{},
@@ -1380,7 +1380,7 @@ func TestIndexerClusterWitReadyState(t *testing.T) {
 		Namespace: clustermaster.Namespace,
 	}
 
-	clustermaster.Status.Phase = splcommon.PhaseReady
+	clustermaster.Status.Phase = enterpriseApi.PhaseReady
 	clustermaster.Spec.ServiceTemplate.Annotations = map[string]string{
 		"traffic.sidecar.istio.io/excludeOutboundPorts": "8089,8191,9997",
 		"traffic.sidecar.istio.io/includeInboundPorts":  "8000,8088",
@@ -1500,7 +1500,7 @@ func TestIndexerClusterWitReadyState(t *testing.T) {
 		},
 		Spec: enterpriseApi.IndexerClusterSpec{
 			CommonSplunkSpec: enterpriseApi.CommonSplunkSpec{
-				Spec: splcommon.Spec{
+				Spec: enterpriseApi.Spec{
 					ImagePullPolicy: "Always",
 				},
 				Volumes:          []corev1.Volume{},
@@ -1565,7 +1565,7 @@ func TestIndexerClusterWitReadyState(t *testing.T) {
 	}
 
 	// simulate Ready state
-	indexercluster.Status.Phase = splcommon.PhaseReady
+	indexercluster.Status.Phase = enterpriseApi.PhaseReady
 	indexercluster.Spec.ServiceTemplate.Annotations = map[string]string{
 		"traffic.sidecar.istio.io/excludeOutboundPorts": "8089,8191,9997",
 		"traffic.sidecar.istio.io/includeInboundPorts":  "8000,8088",

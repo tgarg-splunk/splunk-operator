@@ -105,7 +105,7 @@ func (r *LicenseMasterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 // ApplyLicenseManager adding to handle unit test case
-var ApplyLicenseManager = func(ctx context.Context, client client.Client, instance *enterprisev3.LicenseMaster) (reconcile.Result, error) {
+var ApplyLicenseManager = func(ctx context.Context, client client.Client, instance *enterpriseApi.LicenseMaster) (reconcile.Result, error) {
 	return enterprise.ApplyLicenseManager(ctx, client, instance)
 }
 

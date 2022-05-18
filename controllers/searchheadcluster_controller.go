@@ -106,7 +106,7 @@ func (r *SearchHeadClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 // ApplySearchHeadCluster adding to handle unit test case
-var ApplySearchHeadCluster = func(ctx context.Context, client client.Client, instance *enterprisev3.SearchHeadCluster) (reconcile.Result, error) {
+var ApplySearchHeadCluster = func(ctx context.Context, client client.Client, instance *enterpriseApi.SearchHeadCluster) (reconcile.Result, error) {
 	return enterprise.ApplySearchHeadCluster(ctx, client, instance)
 }
 

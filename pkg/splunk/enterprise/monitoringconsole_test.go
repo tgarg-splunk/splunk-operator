@@ -787,7 +787,7 @@ func TestMonitoringConsoleWithReadyState(t *testing.T) {
 		},
 		Spec: enterpriseApi.MonitoringConsoleSpec{
 			CommonSplunkSpec: enterpriseApi.CommonSplunkSpec{
-				Spec: splcommon.Spec{
+				Spec: enterpriseApi.Spec{
 					ImagePullPolicy: "Always",
 				},
 				Volumes: []corev1.Volume{},
@@ -851,7 +851,7 @@ func TestMonitoringConsoleWithReadyState(t *testing.T) {
 	}
 
 	// simulate Ready state
-	monitoringconsole.Status.Phase = splcommon.PhaseReady
+	monitoringconsole.Status.Phase = enterpriseApi.PhaseReady
 	monitoringconsole.Spec.ServiceTemplate.Annotations = map[string]string{
 		"traffic.sidecar.istio.io/excludeOutboundPorts": "8089,8191,9997",
 		"traffic.sidecar.istio.io/includeInboundPorts":  "8000,8088",

@@ -105,7 +105,7 @@ func (r *ClusterMasterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 // ApplyClusterManager adding to handle unit test case
-var ApplyClusterManager = func(ctx context.Context, client client.Client, instance *enterprisev3.ClusterMaster) (reconcile.Result, error) {
+var ApplyClusterManager = func(ctx context.Context, client client.Client, instance *enterpriseApi.ClusterMaster) (reconcile.Result, error) {
 	return enterprise.ApplyClusterManager(ctx, client, instance)
 }
 

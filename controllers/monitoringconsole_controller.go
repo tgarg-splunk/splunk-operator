@@ -104,7 +104,7 @@ func (r *MonitoringConsoleReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 // ApplyMonitoringConsole adding to handle unit test case
-var ApplyMonitoringConsole = func(ctx context.Context, client client.Client, instance *enterprisev3.MonitoringConsole) (reconcile.Result, error) {
+var ApplyMonitoringConsole = func(ctx context.Context, client client.Client, instance *enterpriseApi.MonitoringConsole) (reconcile.Result, error) {
 	return enterprise.ApplyMonitoringConsole(ctx, client, instance)
 }
 

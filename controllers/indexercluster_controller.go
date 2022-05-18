@@ -105,7 +105,7 @@ func (r *IndexerClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 }
 
 // ApplyIndexerCluster adding to handle unit test case
-var ApplyIndexerCluster = func(ctx context.Context, client client.Client, instance *enterprisev3.IndexerCluster) (reconcile.Result, error) {
+var ApplyIndexerCluster = func(ctx context.Context, client client.Client, instance *enterpriseApi.IndexerCluster) (reconcile.Result, error) {
 	return enterprise.ApplyIndexerCluster(ctx, client, instance)
 }
 

@@ -1355,7 +1355,7 @@ func (shcPlaybookContext *SHCPlaybookContext) runPlaybook(ctx context.Context) e
 	var err error
 	var ok bool
 	cr := shcPlaybookContext.cr.(*enterpriseApi.SearchHeadCluster)
-	if cr.Status.Phase != splcommon.PhaseReady {
+	if cr.Status.Phase != enterpriseApi.PhaseReady {
 		scopedLog.Info("SHC is not ready yet.")
 		return nil
 	}

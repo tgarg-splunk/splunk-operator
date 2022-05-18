@@ -110,7 +110,7 @@ func (r *StandaloneReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 }
 
 // ApplyStandalone adding to handle unit test case
-var ApplyStandalone = func(ctx context.Context, client client.Client, instance *enterprisev3.Standalone) (reconcile.Result, error) {
+var ApplyStandalone = func(ctx context.Context, client client.Client, instance *enterpriseApi.Standalone) (reconcile.Result, error) {
 	return enterprise.ApplyStandalone(ctx, client, instance)
 }
 
