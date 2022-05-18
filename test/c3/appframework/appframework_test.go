@@ -76,7 +76,7 @@ var _ = Describe("c3appfw test", func() {
 		}
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
 		It("smoke, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled, install apps then upgrade them", func() {
 
 			/* Test Steps
@@ -283,7 +283,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) with App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) with App Framework", func() {
 		It("smoke, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled, install apps then downgrade them", func() {
 
 			/* Test Steps
@@ -490,7 +490,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) with App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) with App Framework", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled, install apps, scale up clusters, install apps on new pods, scale down", func() {
 
 			/* Test Steps
@@ -703,7 +703,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
+	XContext("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
 		It("smoke, c3, appframeworkc3, appframework: can deploy a C3 SVA and have apps installed locally on Cluster Manager and Deployer", func() {
 
 			/* Test Steps
@@ -945,7 +945,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
+	XContext("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
 		It("c3, integration, appframeworkc3, appframework: can deploy a C3 SVA with apps installed locally on Cluster Manager and Deployer, cluster-wide on Peers and Search Heads, then upgrade them", func() {
 
 			/* Test Steps
@@ -1156,7 +1156,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
+	XContext("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
 		It("c3, integration, appframeworkc3, appframework: can deploy a C3 SVA with apps installed locally on Cluster Manager and Deployer, cluster-wide on Peers and Search Heads, then downgrade them", func() {
 
 			/* Test Steps
@@ -1364,7 +1364,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
+	XContext("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3 SVA instance with App Framework enabled and install above 200MB of apps at once", func() {
 
 			/* Test Steps
@@ -1456,7 +1456,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) with App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) with App Framework", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled for manual update", func() {
 			/* Test Steps
 			   ################## SETUP ####################
@@ -1700,7 +1700,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
+	XContext("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3 SVA and have apps installed and updated locally on Cluster Manager and Deployer for manual polling", func() {
 
 			/* Test Steps
@@ -1883,7 +1883,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
+	XContext("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
 		It("c3, integration, appframeworkc3, appframework: can deploy a C3 SVA with apps installed locally on Cluster Manager and Deployer, cluster-wide on Peers and Search Heads, then upgrade them via a manual poll", func() {
 
 			/* Test Steps
@@ -2107,7 +2107,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3, add new apps to app source while install is in progress and have all apps installed locally on Cluster Manager and Deployer", func() {
 
 			/* Test Steps
@@ -2235,7 +2235,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3, add new apps to app source while install is in progress and have all apps installed cluster-wide", func() {
 
 			/* Test Steps
@@ -2370,7 +2370,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled and reset operator pod while app install is in progress", func() {
 
 			/* Test Steps
@@ -2464,7 +2464,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled and reset operator pod while app download is in progress", func() {
 
 			/* Test Steps
@@ -2558,7 +2558,7 @@ var _ = Describe("c3appfw test", func() {
 		})
 	})
 
-	Context("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
+	XContext("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
 		It("integration, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled, install an app, then disable it by using a disabled version of the app and then remove it from app source", func() {
 
 			/* Test Steps
@@ -2679,7 +2679,7 @@ var _ = Describe("c3appfw test", func() {
 	})
 
 	Context("Single Site Indexer Cluster with Search Head Cluster (C3) and App Framework", func() {
-		It("integration, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled and update apps after app download is completed", func() {
+		It("smoke, c3, appframeworkc3, appframework: can deploy a C3 SVA with App Framework enabled and update apps after app download is completed", func() {
 
 			/* Test Steps
 			   ################## SETUP ####################
@@ -2764,8 +2764,16 @@ var _ = Describe("c3appfw test", func() {
 			splunkPodAge := testenv.GetPodsStartTime(testcaseEnvInst.GetName())
 
 			//######### VERIFICATIONS #############
-			appVersion = "V1"
-			testenv.VerifyAppInstalled(ctx, deployment, testcaseEnvInst, testcaseEnvInst.GetName(), []string{fmt.Sprintf(testenv.ClusterManagerPod, deployment.GetName()), fmt.Sprintf(testenv.DeployerPod, deployment.GetName())}, appListV1, true, "enabled", false, false)
+			appFileList = testenv.GetAppFileList(appListV1)
+			var idxcPodNames, shcPodNames []string
+			idxcPodNames = testenv.GeneratePodNameSlice(testenv.IndexerPod, deployment.GetName(), indexerReplicas, false, 1)
+			shcPodNames = testenv.GeneratePodNameSlice(testenv.SearchHeadPod, deployment.GetName(), indexerReplicas, false, 1)
+			cmPod := []string{fmt.Sprintf(testenv.ClusterManagerPod, deployment.GetName())}
+			deployerPod := []string{fmt.Sprintf(testenv.DeployerPod, deployment.GetName())}
+			cmAppSourceInfo := testenv.AppSourceInfo{CrKind: cm.Kind, CrName: cm.Name, CrAppSourceName: appSourceNameIdxc, CrAppSourceVolumeName: appSourceVolumeNameIdxc, CrPod: cmPod, CrAppVersion: appVersion, CrAppScope: enterpriseApi.ScopeLocal, CrAppList: appListV1, CrAppFileList: appFileList, CrReplicas: indexerReplicas, CrClusterPods: idxcPodNames}
+			shcAppSourceInfo := testenv.AppSourceInfo{CrKind: shc.Kind, CrName: shc.Name, CrAppSourceName: appSourceNameShc, CrAppSourceVolumeName: appSourceVolumeNameShc, CrPod: deployerPod, CrAppVersion: appVersion, CrAppScope: enterpriseApi.ScopeLocal, CrAppList: appListV1, CrAppFileList: appFileList, CrReplicas: shReplicas, CrClusterPods: shcPodNames}
+			allAppSourceInfo := []testenv.AppSourceInfo{cmAppSourceInfo, shcAppSourceInfo}
+			clusterManagerBundleHash := testenv.AppFrameWorkVerifications(ctx, deployment, testcaseEnvInst, allAppSourceInfo, splunkPodAge, "")
 
 			// Verify no pods reset by checking the pod age
 			testenv.VerifyNoPodReset(ctx, deployment, testcaseEnvInst, testcaseEnvInst.GetName(), splunkPodAge, nil)
@@ -2791,20 +2799,19 @@ var _ = Describe("c3appfw test", func() {
 
 			//############  UPGRADE VERIFICATIONS ############
 			appVersion = "V2"
-			var idxcPodNames, shcPodNames []string
-			idxcPodNames = testenv.GeneratePodNameSlice(testenv.IndexerPod, deployment.GetName(), indexerReplicas, false, 1)
-			shcPodNames = testenv.GeneratePodNameSlice(testenv.SearchHeadPod, deployment.GetName(), indexerReplicas, false, 1)
-			cmPod := []string{fmt.Sprintf(testenv.ClusterManagerPod, deployment.GetName())}
-			deployerPod := []string{fmt.Sprintf(testenv.DeployerPod, deployment.GetName())}
-			cmAppSourceInfo := testenv.AppSourceInfo{CrKind: cm.Kind, CrName: cm.Name, CrAppSourceName: appSourceNameIdxc, CrAppSourceVolumeName: appSourceVolumeNameIdxc, CrPod: cmPod, CrAppVersion: appVersion, CrAppScope: enterpriseApi.ScopeLocal, CrAppList: appListV2, CrAppFileList: appFileList, CrReplicas: indexerReplicas, CrClusterPods: idxcPodNames}
-			shcAppSourceInfo := testenv.AppSourceInfo{CrKind: shc.Kind, CrName: shc.Name, CrAppSourceName: appSourceNameShc, CrAppSourceVolumeName: appSourceVolumeNameShc, CrPod: deployerPod, CrAppVersion: appVersion, CrAppScope: enterpriseApi.ScopeLocal, CrAppList: appListV2, CrAppFileList: appFileList, CrReplicas: shReplicas, CrClusterPods: shcPodNames}
-			allAppSourceInfo := []testenv.AppSourceInfo{cmAppSourceInfo, shcAppSourceInfo}
-			testenv.AppFrameWorkVerifications(ctx, deployment, testcaseEnvInst, allAppSourceInfo, splunkPodAge, "")
+			cmAppSourceInfo.CrAppVersion = appVersion
+			cmAppSourceInfo.CrAppList = appListV2
+			cmAppSourceInfo.CrAppFileList = testenv.GetAppFileList(appListV2)
+			shcAppSourceInfo.CrAppVersion = appVersion
+			shcAppSourceInfo.CrAppList = appListV2
+			shcAppSourceInfo.CrAppFileList = testenv.GetAppFileList(appListV2)
+			allAppSourceInfo = []testenv.AppSourceInfo{cmAppSourceInfo, shcAppSourceInfo}
+			testenv.AppFrameWorkVerifications(ctx, deployment, testcaseEnvInst, allAppSourceInfo, splunkPodAge, clusterManagerBundleHash)
 
 		})
 	})
 
-	Context("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
+	XContext("Clustered deployment (C3 - clustered indexer, search head cluster)", func() {
 		It("c3, integration, appframeworkc3, appframework: can deploy a C3 SVA and install a bigger volume of apps than the operator PV disk space", func() {
 
 			/* Test Steps
