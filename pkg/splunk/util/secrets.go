@@ -294,7 +294,7 @@ func GetExistingLatestVersionedSecret(ctx context.Context, c splcommon.Controlle
 
 // GetLatestVersionedSecret is used to create/retrieve latest versionedSecretIdentifier based secret, cr is optional for owner references(pass nil if not required)
 func GetLatestVersionedSecret(ctx context.Context, c splcommon.ControllerClient, cr splcommon.MetaObject, namespace string, versionedSecretIdentifier string) (*corev1.Secret, error) {
-	reqLogger := log.FromContext(ctx)	
+	reqLogger := log.FromContext(ctx)
 	scopedLog := reqLogger.WithName("GetLatestVersionedSecret").WithValues(
 		"versionedSecretIdentifier", versionedSecretIdentifier,
 		"namespace", namespace)

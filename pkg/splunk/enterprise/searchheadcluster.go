@@ -258,7 +258,7 @@ func ApplyShcSecret(ctx context.Context, mgr *searchHeadClusterPodManager, repli
 	}
 
 	reqLogger := log.FromContext(ctx)
-	scopedLog := reqLogger.WithName("ApplyShcSecret").WithValues("Desired replicas", replicas, "ShcSecretChanged", mgr.cr.Status.ShcSecretChanged, "AdminSecretChanged", mgr.cr.Status.AdminSecretChanged, "CrStatusNamespaceSecretResourceVersion", mgr.cr.Status.NamespaceSecretResourceVersion, "NamespaceSecretResourceVersion", namespaceSecret.GetObjectMeta().GetResourceVersion(), "mock", mock)
+	scopedLog := reqLogger.WithName("ApplyShcSecret").WithValues("Desired replicas", replicas, "ShcSecretChanged", mgr.cr.Status.ShcSecretChanged, "AdminSecretChanged", mgr.cr.Status.AdminSecretChanged, "CrStatusNamespaceSecretResourceVersion", mgr.cr.Status.NamespaceSecretResourceVersion, "NamespaceSecretResourceVersion", namespaceSecret.GetObjectMeta().GetResourceVersion())
 
 	// If namespace scoped secret revision is the same ignore
 	if len(mgr.cr.Status.NamespaceSecretResourceVersion) == 0 {
