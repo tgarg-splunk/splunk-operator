@@ -152,6 +152,7 @@ spec:
         - key: server
           value:
             directory: /opt/splunk/etc/system/local
+            content:
               shclustering:
                 rcv_timeout: 300
                 send_timeeout: 300
