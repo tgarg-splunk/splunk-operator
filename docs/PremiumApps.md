@@ -90,11 +90,11 @@ These timeouts can be set through defaults.yaml
         - key: server
           value:
             directory: /opt/splunk/etc/system/local
-             content:
-               shclustering:         
-                 rcv_timeout: 300
-                 send_timeeout: 300
-                 cxn_timeeout: 300
+            content:
+              shclustering:         
+                rcv_timeout: 300
+                send_timeeout: 300
+                cxn_timeeout: 300
 ```
 
 ##### splunkdConnectionTimeout
