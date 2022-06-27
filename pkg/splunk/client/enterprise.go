@@ -918,6 +918,33 @@ func (c *SplunkClient) GetClusterInfo(mockCall bool) (*ClusterInfo, error) {
 	return &apiResponse.Entry[0].Content, nil
 }
 
+//ClusterInfo is the struct for checking ClusterInfo
+type ManagerURI struct {
+	Manager string `json:"manager_uri"`
+}
+
+// GetCMInfo queries the peers for manager URI.
+//See https://docs.splunk.com/Documentation/Splunk/latest/RESTREF/RESTcluster#cluster.2Fconfig
+func (c *SplunkClient) GetManagerURI(mockCall bool) (*ManagerURI, error) {
+	if mockCall {
+		return nil, nil
+	}
+	apiResponse := struct {
+		Entry []struct {
+			Content ManagerURI `json:"content"`
+		} `json:"entry"`
+	}{}
+	path := "/services/cluster/config"
+	err := c.Get(path, &apiResponse)
+	if err != nil {
+		return nil, err
+	}
+	if len(apiResponse.Entry) < 1 {
+		return nil, fmt.Errorf("invalid response from %s%s", c.ManagementURI, path)
+	}
+	return &apiResponse.Entry[0].Content, nil
+}
+
 // SetIdxcSecret sets idxc_secret for a Splunk Instance
 // Can be used on any peer in an indexer cluster as long as the idxc_secret matches the cluster manager
 // See https://docs.splunk.com/Documentation/Splunk/latest/RESTREF/RESTcluster#cluster.2Fconfig.2Fconfig

@@ -112,7 +112,12 @@ func ApplyIndexerClusterManager(ctx context.Context, client splcommon.Controller
 	if mgr.cr.Status.ClusterManagerPhase == splcommon.PhaseReady {
 		err = VerifyRFPeers(ctx, mgr, client)
 		if err != nil {
-			eventPublisher.Warning(ctx, "verifyRFPeers", fmt.Sprintf("verify RF peer failed %s", err.Error()))
+			cmChanged := mgr.verifyCMChanged(ctx, client)
+			if cmChanged {
+				scopedLog.Info("ClusterManager changed, added peers to the new Manager")
+			} else {
+				eventPublisher.Warning(ctx, "verifyRFPeers", fmt.Sprintf("verify RF peer failed %s", err.Error()))
+			}
 			return result, err
 		}
 	}
@@ -299,7 +304,12 @@ func ApplyIndexerCluster(ctx context.Context, client splcommon.ControllerClient,
 	if mgr.cr.Status.ClusterMasterPhase == splcommon.PhaseReady {
 		err = VerifyRFPeers(ctx, mgr, client)
 		if err != nil {
-			eventPublisher.Warning(ctx, "verifyRFPeers", fmt.Sprintf("verify RF peer failed %s", err.Error()))
+			cmChanged := mgr.verifyCMChanged(ctx, client)
+			if cmChanged {
+				scopedLog.Info("ClusterManager changed, added peers to the new Manager")
+			} else {
+				eventPublisher.Warning(ctx, "verifyRFPeers", fmt.Sprintf("verify RF peer failed %s", err.Error()))
+			}
 			return result, err
 		}
 	}
@@ -411,6 +421,39 @@ func ApplyIndexerCluster(ctx context.Context, client splcommon.ControllerClient,
 		result.RequeueAfter = 0
 	}
 	return result, nil
+}
+
+// verifyCMChanged verifies if CM used for this cluster changed
+func (mgr *indexerClusterPodManager) verifyCMChanged(ctx context.Context, c splcommon.ControllerClient) bool {
+	mgr.log.Info("Verify if ClusterManager has changed")
+
+	if !(len(mgr.cr.Spec.ClusterManagerRef.Name) > 0) && !(len(mgr.cr.Spec.ClusterMasterRef.Name) > 0) || mgr.cr.Status.Phase != "Ready" {
+		return false
+	}
+
+	for i := int32(0); i <= mgr.cr.Spec.Replicas-1; i++ {
+		// Get client for indexer Pod
+		idxcClient := mgr.getClient(ctx, i)
+
+		// Get CM URI from peer pod
+		cmURI, err := idxcClient.GetManagerURI(false)
+		if err != nil {
+			return false
+		}
+
+		if cmURI.Manager != mgr.cr.Spec.ClusterManagerRef.Name && cmURI.Manager != mgr.cr.Spec.ClusterMasterRef.Name {
+			indexerPodName := GetSplunkStatefulsetPodName(SplunkIndexer, mgr.cr.GetName(), i)
+			podExecClient := splutil.GetPodExecClient(c, mgr.cr, indexerPodName)
+			command := fmt.Sprintf("cat /mnt/splunk-operator/local/%s", configToken)
+			streamOptions := splutil.NewStreamOptionsObject(command)
+			_, _, err := podExecClient.RunPodExecCommand(ctx, streamOptions, []string{"/bin/sh"})
+			if err == nil {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // VerifyRFPeers function pointer to mock
