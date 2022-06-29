@@ -236,7 +236,22 @@ func GetPodExecClient(client splcommon.ControllerClient, cr splcommon.MetaObject
 
 // RunPodExecCommand runs the specific pod exec command
 func (podExecClient *PodExecClient) RunPodExecCommand(ctx context.Context, streamOptions *remotecommand.StreamOptions, baseCmd []string) (string, string, error) {
-	return PodExecCommand(ctx, podExecClient.client, podExecClient.targetPodName, podExecClient.cr.GetNamespace(), baseCmd, streamOptions, false, false)
+	reqLogger := log.FromContext(ctx)
+	errmsg := ""
+	stdOut, stdErr, err := PodExecCommand(ctx, podExecClient.client, podExecClient.targetPodName, podExecClient.cr.GetNamespace(), baseCmd, streamOptions, false, false)
+	if err != nil {
+		errmsg = err.Error()
+	}
+	reqLogger.Info("podexec call returned", "cmd", strings.Join(baseCmd, " "), "stdout", stdOut, "stderr", stdErr, "err", errmsg)
+	// Note: splunk 9.0 throws warning message "warning: server certificate hostname validation is disabled. please see server.conf/[sslconfig]/cliverifyservername for details.\n"
+	// we are supressing the message
+	if strings.Contains(stdErr, SplunkSshWarningMessage) {
+		stdErr = strings.ReplaceAll(stdErr, SplunkSshWarningMessage, "")
+	}
+	if strings.Contains(stdOut, SplunkSshWarningMessage) {
+		stdOut = strings.ReplaceAll(stdOut, SplunkSshWarningMessage, "")
+	}
+	return stdOut, stdErr, err
 }
 
 // SetTargetPodName sets the targetPodName field for podExecClient
