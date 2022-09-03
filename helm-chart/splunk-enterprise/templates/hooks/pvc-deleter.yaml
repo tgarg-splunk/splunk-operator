@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pvc-deleter-job
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: post-delete-job
+        image: "bitnami/kubectl"
+        command: ["kubectl"]
+        args:
+        - "delete"
+        - "pvc"
+        - "--all"
+        - "-n {{ .Release.Namespace }}"
+      serviceAccountName: pvc-deleter-sa
