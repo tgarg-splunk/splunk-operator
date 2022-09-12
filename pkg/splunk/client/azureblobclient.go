@@ -479,9 +479,8 @@ func (client *AzureBlobClient) DownloadApp(ctx context.Context, downloadRequest 
 	}
 	defer httpResponse.Body.Close()
 
-	// Create local file on operator
-	localFile, err := os.Create(downloadRequest.LocalFile)
-	if err != nil {
+		file, err := os.Create(downloadRequest.LocalFile)
+		if err != nil {
 		scopedLog.Error(err, "Unable to open local file")
 		return false, err
 	}
