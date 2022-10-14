@@ -84,6 +84,7 @@ if [  "${CLUSTER_WIDE}" == "true" ]; then
   # sleep before checking for deployment, in slow clusters deployment call may not even started
   # in those cases, kubectl will fail with error:  no matching resources found
   sleep 2
+  kubectl get pods -A
   kubectl wait --for=condition=ready pod -l control-plane=controller-manager --timeout=600s -n splunk-operator
   if [ $? -ne 0 ]; then
     echo "Operator installation not ready..."
