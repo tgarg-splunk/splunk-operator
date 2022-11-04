@@ -4,6 +4,7 @@ on:
     branches:
       - develop
       - main
+      - azure210
 jobs:
   build-operator-image:
     runs-on: ubuntu-latest
