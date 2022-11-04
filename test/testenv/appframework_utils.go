@@ -12,6 +12,8 @@ import (
 	splcommon "github.com/splunk/splunk-operator/pkg/splunk/common"
 	corev1 "k8s.io/api/core/v1"
 
+	. "github.com/onsi/gomega"
+
 	enterpriseApiV3 "github.com/splunk/splunk-operator/api/v3"
 	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -107,6 +109,16 @@ var AppStagingLocOnPod = "/operator-staging/appframework/"
 
 // AppDownloadVolume location on Operator pod for App framework downloads
 var AppDownloadVolume = "/opt/splunk/appframework/downloadedApps/"
+
+var uploadedApps []string
+var s3TestDirShcLocal string
+var s3TestDirIdxcLocal string
+var s3TestDirShcCluster string
+var s3TestDirIdxcCluster string
+var appSourceNameIdxc string
+var appSourceNameShc string
+var AppFrameworkSpecIdxc enterpriseApi.AppFrameworkSpec
+var AppFrameworkSpecShc enterpriseApi.AppFrameworkSpec
 
 // GenerateAppSourceSpec return AppSourceSpec struct with given values
 func GenerateAppSourceSpec(appSourceName string, appSourceLocation string, appSourceDefaultSpec enterpriseApi.AppSourceDefaultSpec) enterpriseApi.AppSourceSpec {
@@ -560,4 +572,64 @@ func GetIsDeploymentInProgressFlag(ctx context.Context, deployment *Deployment, 
 		err = errors.New(message)
 	}
 	return isDeploymentInProgress, err
+}
+
+// SetupMonitoringConsole deploys Monitoring Console
+func SetupMonitoringConsole(ctx context.Context, deployment *Deployment, testenvInstance *TestCaseEnv, appVersion string, appList []string, downloadDir string) (*enterpriseApi.MonitoringConsole, string, string, string) {
+
+	// Prepare Monitoring Console spec with its own app source
+	s3TestDirMC := "c3appfw-mc-" + RandomDNSName(4)
+	appSourceNameMC := "appframework-" + enterpriseApi.ScopeLocal + "mc-" + RandomDNSName(3)
+	appSourceVolumeNameMC := "appframework-test-volume-mc-" + RandomDNSName(3)
+	appFrameworkSpecMC := GenerateAppFrameworkSpec(ctx, testenvInstance, appSourceVolumeNameMC, enterpriseApi.ScopeLocal, appSourceNameMC, s3TestDirMC, 60)
+
+	mcSpec := enterpriseApi.MonitoringConsoleSpec{
+		CommonSplunkSpec: enterpriseApi.CommonSplunkSpec{
+			Spec: enterpriseApi.Spec{
+				ImagePullPolicy: "Always",
+			},
+			Volumes: []corev1.Volume{},
+		},
+		AppFrameworkConfig: appFrameworkSpecMC,
+	}
+
+	// Deploy Monitoring Console
+	testenvInstance.Log.Info("Deploy Monitoring Console")
+	mcName := deployment.GetName()
+	mc, err := deployment.DeployMonitoringConsoleWithGivenSpec(ctx, testenvInstance.GetName(), mcName, mcSpec)
+	Expect(err).To(Succeed(), "Unable to deploy Monitoring Console")
+	return mc, mcName, appSourceNameMC, s3TestDirMC
+}
+
+// SetupC3 deploys Single Site Indexer Cluster with Search Head Cluster
+func SetupC3(ctx context.Context, deployment *Deployment, testenvInstance *TestCaseEnv, appVersion string, appList []string, downloadDir string, mc *enterpriseApi.MonitoringConsole, mcName string) (*enterpriseApi.ClusterManager, *enterpriseApi.SearchHeadCluster, string, int, string, string, string, string, string, string) {
+
+	// Create App framework Spec for C3
+	s3TestDirIdxc := "c3appfw-idxc-" + RandomDNSName(4)
+	s3TestDirShc := "c3appfw-shc-" + RandomDNSName(4)
+	appSourceNameIdxc = "appframework-idxc-" + enterpriseApi.ScopeCluster + RandomDNSName(3)
+	appSourceNameShc = "appframework-shc-" + enterpriseApi.ScopeCluster + RandomDNSName(3)
+	appSourceVolumeNameIdxc := "appframework-test-volume-idxc-" + RandomDNSName(3)
+	appSourceVolumeNameShc := "appframework-test-volume-shc-" + RandomDNSName(3)
+	AppFrameworkSpecIdxc := GenerateAppFrameworkSpec(ctx, testenvInstance, appSourceVolumeNameIdxc, enterpriseApi.ScopeCluster, appSourceNameIdxc, s3TestDirIdxc, 60)
+	AppFrameworkSpecShc := GenerateAppFrameworkSpec(ctx, testenvInstance, appSourceVolumeNameShc, enterpriseApi.ScopeCluster, appSourceNameShc, s3TestDirShc, 60)
+
+	// get revision number of the resource
+	resourceVersion := GetResourceVersion(ctx, deployment, testenvInstance, mc)
+
+	// Deploy C3 CRD
+	testenvInstance.Log.Info("Deploy Single Site Indexer Cluster with Search Head Cluster")
+	indexerReplicas := 3
+	//shReplicas := 3
+	cm, _, shc, err := deployment.DeploySingleSiteClusterWithGivenAppFrameworkSpec(ctx, deployment.GetName(), indexerReplicas, true, AppFrameworkSpecIdxc, AppFrameworkSpecShc, mcName, "")
+
+	Expect(err).To(Succeed(), "Unable to deploy Single Site Indexer Cluster with Search Head Cluster")
+
+	return cm, shc, resourceVersion, indexerReplicas, s3TestDirIdxc, s3TestDirShc, appSourceVolumeNameIdxc, appSourceVolumeNameShc, appSourceNameIdxc, appSourceNameShc
+}
+
+// EditAppFrameworkSpec edts the app framework spec of an existing CR
+func EditAppFrameworkSpec(ctx context.Context, appspec enterpriseApi.AppFrameworkSpec, scope string) enterpriseApi.AppFrameworkSpec {
+	appspec.Defaults.Scope = scope
+	return appspec
 }

@@ -14,6 +14,8 @@
 package c3appfw
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,6 +24,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
+	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
 
 	"github.com/splunk/splunk-operator/test/testenv"
 )
@@ -36,20 +39,38 @@ const (
 )
 
 var (
-	testenvInstance       *testenv.TestEnv
-	testSuiteName         = "c3appfw-" + testenv.RandomDNSName(3)
-	appListV1             []string
-	appListV2             []string
-	testDataS3Bucket      = os.Getenv("TEST_BUCKET")
-	testS3Bucket          = os.Getenv("TEST_INDEXES_S3_BUCKET")
-	s3AppDirV1            = testenv.AppLocationV1
-	s3AppDirV2            = testenv.AppLocationV2
-	s3AppDirDisabled      = testenv.AppLocationDisabledApps
-	s3PVTestApps          = testenv.PVTestAppsLocation
-	currDir, _            = os.Getwd()
-	downloadDirV1         = filepath.Join(currDir, "c3appfwV1-"+testenv.RandomDNSName(4))
-	downloadDirV2         = filepath.Join(currDir, "c3appfwV2-"+testenv.RandomDNSName(4))
-	downloadDirPVTestApps = filepath.Join(currDir, "c3appfwPVTestApps-"+testenv.RandomDNSName(4))
+	testenvInstance         *testenv.TestEnv
+	testcaseEnvInst         *testenv.TestCaseEnv
+	deployment              *testenv.Deployment
+	testSuiteName           = "c3appfw-" + testenv.RandomDNSName(3)
+	appListV1               []string
+	appListV2               []string
+	testDataS3Bucket        = os.Getenv("TEST_BUCKET")
+	testS3Bucket            = os.Getenv("TEST_INDEXES_S3_BUCKET")
+	s3AppDirV1              = testenv.AppLocationV1
+	s3AppDirV2              = testenv.AppLocationV2
+	s3PVTestApps            = testenv.PVTestAppsLocation
+	currDir, _              = os.Getwd()
+	downloadDirV1           = filepath.Join(currDir, "c3appfwV1-"+testenv.RandomDNSName(4))
+	downloadDirV2           = filepath.Join(currDir, "c3appfwV2-"+testenv.RandomDNSName(4))
+	downloadDirPVTestApps   = filepath.Join(currDir, "c3appfwPVTestApps-"+testenv.RandomDNSName(4))
+	mc                      *enterpriseApi.MonitoringConsole
+	mcName                  string
+	appSourceNameMC         string
+	s3TestDirMC             string
+	cm                      *enterpriseApi.ClusterManager
+	shc                     *enterpriseApi.SearchHeadCluster
+	resourceVersion         string
+	s3TestDirIdxc           string
+	s3TestDirShc            string
+	indexerReplicas         int
+	appSourceVolumeNameIdxc string
+	appSourceVolumeNameShc  string
+	appVersion              string
+	appFileList             []string
+	uploadedFiles           []string
+	appSourceNameIdxc       string
+	appSourceNameShc        string
 )
 
 // TestBasic is the main entry point
@@ -63,6 +84,7 @@ func TestBasic(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
+	ctx := context.TODO()
 	testenvInstance, err = testenv.NewDefaultTestEnv(testSuiteName)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -82,6 +104,20 @@ var _ = BeforeSuite(func() {
 		// Download V2 Apps from S3
 		err = testenv.DownloadFilesFromS3(testDataS3Bucket, s3AppDirV2, downloadDirV2, appFileList)
 		Expect(err).To(Succeed(), "Unable to download V2 app files")
+
+		var err error
+		name := fmt.Sprintf("%s-%s", testenvInstance.GetName(), testenv.RandomDNSName(3))
+		testcaseEnvInst, err = testenv.NewDefaultTestCaseEnv(testenvInstance.GetKubeClient(), name)
+		Expect(err).To(Succeed(), "Unable to create testcaseenv")
+		deployment, err = testcaseEnvInst.NewDeployment(testenv.RandomDNSName(3))
+		Expect(err).To(Succeed(), "Unable to create deployment")
+
+		// Deploy Monitoring Console
+		appVersion := "V1"
+		mc, mcName, appSourceNameMC, s3TestDirMC = testenv.SetupMonitoringConsole(ctx, deployment, testcaseEnvInst, appVersion, appListV1, downloadDirV1)
+
+		// Deploy C3 CRD
+		cm, shc, resourceVersion, indexerReplicas, s3TestDirIdxc, s3TestDirShc, appSourceVolumeNameIdxc, appSourceVolumeNameShc, appSourceNameIdxc, appSourceNameShc = testenv.SetupC3(ctx, deployment, testcaseEnvInst, appVersion, appListV1, downloadDirV1, mc, mcName)
 	} else {
 		testenvInstance.Log.Info("Skipping Before Suite Setup", "Cluster Provider", testenv.ClusterProvider)
 	}
@@ -95,6 +131,10 @@ var _ = AfterSuite(func() {
 
 	if testenvInstance != nil {
 		Expect(testenvInstance.Teardown()).ToNot(HaveOccurred())
+	}
+
+	if deployment != nil {
+		deployment.Teardown()
 	}
 
 	// Delete locally downloaded app files
