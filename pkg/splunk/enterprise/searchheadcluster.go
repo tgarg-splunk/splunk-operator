@@ -18,13 +18,11 @@ package enterprise
 import (
 	"context"
 	"fmt"
+	"github.com/go-logr/logr"
+	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
 	"reflect"
 	"strings"
 	"time"
-
-	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
-
-	"github.com/go-logr/logr"
 
 	splclient "github.com/splunk/splunk-operator/pkg/splunk/client"
 	splcommon "github.com/splunk/splunk-operator/pkg/splunk/common"
@@ -49,7 +47,6 @@ func ApplySearchHeadCluster(ctx context.Context, client splcommon.ControllerClie
 	reqLogger := log.FromContext(ctx)
 	scopedLog := reqLogger.WithName("ApplySearchHeadCluster")
 	eventPublisher, _ := newK8EventPublisher(client, cr)
-
 	// validate and updates defaults for CR
 	err := validateSearchHeadClusterSpec(ctx, client, cr)
 	if err != nil {
@@ -167,6 +164,13 @@ func ApplySearchHeadCluster(ctx context.Context, client splcommon.ControllerClie
 	}
 	cr.Status.DeployerPhase = phase
 
+	err = IsCustomResourceUpgradable(ctx, client, cr, &cr.Spec.CommonSplunkSpec, eventPublisher)
+	if err != nil {
+		cr.Status.Phase = enterpriseApi.PhasePending
+		cr.Status.ErrorMessage = err.Error()
+		return result, err
+	}
+
 	// create or update statefulset for the search heads
 	statefulSet, err = getSearchHeadStatefulSet(ctx, client, cr)
 	if err != nil {
@@ -193,6 +197,8 @@ func ApplySearchHeadCluster(ctx context.Context, client splcommon.ControllerClie
 
 	// no need to requeue if everything is ready
 	if cr.Status.Phase == enterpriseApi.PhaseReady {
+		cr.Status.Image = cr.Spec.Image
+
 		//upgrade fron automated MC to MC CRD
 		namespacedName := types.NamespacedName{Namespace: cr.GetNamespace(), Name: GetSplunkStatefulsetName(SplunkMonitoringConsole, cr.GetNamespace())}
 		err = splctrl.DeleteReferencesToAutomatedMCIfExists(ctx, client, cr, namespacedName)

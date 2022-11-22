@@ -44,6 +44,10 @@ type MonitoringConsoleSpec struct {
 
 // MonitoringConsoleStatus defines the observed state of MonitoringConsole
 type MonitoringConsoleStatus struct {
+
+	// Installed Splunk Image tag
+	Image string `json:"image"`
+
 	// current phase of the monitoring console
 	Phase Phase `json:"phase"`
 
@@ -58,6 +62,9 @@ type MonitoringConsoleStatus struct {
 
 	// App Framework status
 	AppContext AppDeploymentContext `json:"appContext,omitempty"`
+
+	// the last error message by CR
+	ErrorMessage string `json:"errorMessage"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

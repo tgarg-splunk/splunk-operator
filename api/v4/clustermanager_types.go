@@ -47,6 +47,10 @@ type ClusterManagerSpec struct {
 
 // ClusterManagerStatus defines the observed state of ClusterManager
 type ClusterManagerStatus struct {
+
+	// Installed Splunk Image tag
+	Image string `json:"image"`
+
 	// current phase of the cluster manager
 	Phase Phase `json:"phase"`
 
@@ -67,6 +71,9 @@ type ClusterManagerStatus struct {
 
 	// Telemetry App installation flag
 	TelAppInstalled bool `json:"telAppInstalled"`
+
+	// the last error message by CR
+	ErrorMessage string `json:"errorMessage"`
 }
 
 // BundlePushInfo Indicates if bundle push required

@@ -55,49 +55,49 @@ func (k *K8EventPublisher) publishEvent(ctx context.Context, eventType, reason, 
 	switch k.instance.(type) {
 	case *enterpriseApi.Standalone:
 		cr, ok := k.instance.(*enterpriseApi.Standalone)
-		if ok {
+		if !ok {
 			return
 		}
 		event = cr.NewEvent(eventType, reason, message)
 	case *enterpriseApiV3.LicenseMaster:
 		cr, ok := k.instance.(*enterpriseApiV3.LicenseMaster)
-		if ok {
+		if !ok {
 			return
 		}
 		event = cr.NewEvent(eventType, reason, message)
 	case *enterpriseApi.LicenseManager:
 		cr, ok := k.instance.(*enterpriseApi.LicenseManager)
-		if ok {
+		if !ok {
 			return
 		}
 		event = cr.NewEvent(eventType, reason, message)
 	case *enterpriseApi.IndexerCluster:
 		cr, ok := k.instance.(*enterpriseApi.IndexerCluster)
-		if ok {
+		if !ok {
 			return
 		}
 		event = cr.NewEvent(eventType, reason, message)
 	case *enterpriseApi.ClusterManager:
 		cr, ok := k.instance.(*enterpriseApi.ClusterManager)
-		if ok {
+		if !ok {
 			return
 		}
 		event = cr.NewEvent(eventType, reason, message)
 	case *enterpriseApiV3.ClusterMaster:
 		cr, ok := k.instance.(*enterpriseApiV3.ClusterMaster)
-		if ok {
+		if !ok {
 			return
 		}
 		event = cr.NewEvent(eventType, reason, message)
 	case *enterpriseApi.MonitoringConsole:
 		cr, ok := k.instance.(*enterpriseApi.MonitoringConsole)
-		if ok {
+		if !ok {
 			return
 		}
 		event = cr.NewEvent(eventType, reason, message)
 	case *enterpriseApi.SearchHeadCluster:
 		cr, ok := k.instance.(*enterpriseApi.SearchHeadCluster)
-		if ok {
+		if !ok {
 			return
 		}
 		event = cr.NewEvent(eventType, reason, message)

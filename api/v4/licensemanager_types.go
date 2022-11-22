@@ -44,6 +44,9 @@ type LicenseManagerSpec struct {
 
 // LicenseManagerStatus defines the observed state of a Splunk Enterprise license manager.
 type LicenseManagerStatus struct {
+	// Installed Splunk Image tag
+	Image string `json:"image"`
+
 	// current phase of the license manager
 	Phase Phase `json:"phase"`
 
@@ -52,6 +55,9 @@ type LicenseManagerStatus struct {
 
 	// Telemetry App installation flag
 	TelAppInstalled bool `json:"telAppInstalled"`
+
+	// the last error message by CR
+	ErrorMessage string `json:"errorMessage"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

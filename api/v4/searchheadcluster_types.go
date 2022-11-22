@@ -69,6 +69,10 @@ type SearchHeadClusterMemberStatus struct {
 
 // SearchHeadClusterStatus defines the observed state of a Splunk Enterprise search head cluster
 type SearchHeadClusterStatus struct {
+
+	// Installed Splunk Image tag
+	Image string `json:"image"`
+
 	// current phase of the search head cluster
 	Phase Phase `json:"phase"`
 
@@ -119,6 +123,9 @@ type SearchHeadClusterStatus struct {
 
 	// Telemetry App installation flag
 	TelAppInstalled bool `json:"telAppInstalled"`
+
+	// the last error message by CR
+	ErrorMessage string `json:"errorMessage"`
 }
 
 // SearchHeadCluster is the Schema for a Splunk Enterprise search head cluster

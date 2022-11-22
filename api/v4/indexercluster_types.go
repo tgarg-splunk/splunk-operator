@@ -65,6 +65,10 @@ type IndexerClusterMemberStatus struct {
 
 // IndexerClusterStatus defines the observed state of a Splunk Enterprise indexer cluster
 type IndexerClusterStatus struct {
+
+	// Installed Splunk Image tag
+	Image string `json:"image"`
+
 	// current phase of the indexer cluster
 	Phase Phase `json:"phase"`
 
@@ -108,6 +112,9 @@ type IndexerClusterStatus struct {
 
 	// status of each indexer cluster peer
 	Peers []IndexerClusterMemberStatus `json:"peers"`
+
+	// the last error message by CR
+	ErrorMessage string `json:"errorMessage"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

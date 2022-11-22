@@ -185,6 +185,13 @@ func ApplyStandalone(ctx context.Context, client splcommon.ControllerClient, cr 
 		}
 	}
 
+	err = IsCustomResourceUpgradable(ctx, client, cr, &cr.Spec.CommonSplunkSpec, eventPublisher)
+	if err != nil {
+		cr.Status.Phase = enterpriseApi.PhasePending
+		cr.Status.ErrorMessage = err.Error()
+		return result, err
+	}
+
 	// create or update statefulset
 	statefulSet, err := getStandaloneStatefulSet(ctx, client, cr)
 	if err != nil {
@@ -211,6 +218,8 @@ func ApplyStandalone(ctx context.Context, client splcommon.ControllerClient, cr 
 
 	// no need to requeue if everything is ready
 	if cr.Status.Phase == enterpriseApi.PhaseReady {
+		cr.Status.Image = cr.Spec.Image
+
 		//upgrade fron automated MC to MC CRD
 		namespacedName := types.NamespacedName{Namespace: cr.GetNamespace(), Name: GetSplunkStatefulsetName(SplunkMonitoringConsole, cr.GetNamespace())}
 		err = splctrl.DeleteReferencesToAutomatedMCIfExists(ctx, client, cr, namespacedName)

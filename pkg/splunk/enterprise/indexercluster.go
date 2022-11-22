@@ -24,7 +24,6 @@ import (
 	"time"
 
 	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -55,7 +54,6 @@ func ApplyIndexerClusterManager(ctx context.Context, client splcommon.Controller
 	reqLogger := log.FromContext(ctx)
 	scopedLog := reqLogger.WithName("ApplyIndexerClusterManager").WithValues("name", cr.GetName(), "namespace", cr.GetNamespace())
 	eventPublisher, _ := newK8EventPublisher(client, cr)
-
 	// validate and updates defaults for CR
 	err := validateIndexerClusterSpec(ctx, client, cr)
 	if err != nil {
@@ -145,6 +143,13 @@ func ApplyIndexerClusterManager(ctx context.Context, client splcommon.Controller
 		return result, err
 	}
 
+	err = IsCustomResourceUpgradable(ctx, client, cr, &cr.Spec.CommonSplunkSpec, eventPublisher)
+	if err != nil {
+		cr.Status.Phase = enterpriseApi.PhasePending
+		cr.Status.ErrorMessage = err.Error()
+		return result, err
+	}
+
 	// create or update statefulset for the indexers
 	statefulSet, err := getIndexerStatefulSet(ctx, client, cr)
 	if err != nil {
@@ -221,6 +226,8 @@ func ApplyIndexerClusterManager(ctx context.Context, client splcommon.Controller
 
 	// no need to requeue if everything is ready
 	if cr.Status.Phase == enterpriseApi.PhaseReady {
+		cr.Status.Image = cr.Spec.Image
+
 		//update MC
 		//Retrieve monitoring  console ref from CM Spec
 		cmMonitoringConsoleConfigRef, err := RetrieveCMSpec(ctx, client, cr)

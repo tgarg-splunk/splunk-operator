@@ -18,12 +18,8 @@ package enterprise
 import (
 	"context"
 	"fmt"
-	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
-	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
-
 	"github.com/go-logr/logr"
+	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
 	splclient "github.com/splunk/splunk-operator/pkg/splunk/client"
 	splcommon "github.com/splunk/splunk-operator/pkg/splunk/common"
 	splctrl "github.com/splunk/splunk-operator/pkg/splunk/controller"
@@ -31,8 +27,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"time"
 )
 
 // ApplyClusterManager reconciles the state of a Splunk Enterprise cluster manager.
@@ -157,6 +156,13 @@ func ApplyClusterManager(ctx context.Context, client splcommon.ControllerClient,
 		return result, err
 	}
 
+	err = IsCustomResourceUpgradable(ctx, client, cr, &cr.Spec.CommonSplunkSpec, eventPublisher)
+	if err != nil {
+		cr.Status.Phase = enterpriseApi.PhasePending
+		cr.Status.ErrorMessage = err.Error()
+		return result, err
+	}
+
 	// create or update statefulset for the cluster manager
 	statefulSet, err := getClusterManagerStatefulSet(ctx, client, cr)
 	if err != nil {
@@ -179,6 +185,7 @@ func ApplyClusterManager(ctx context.Context, client splcommon.ControllerClient,
 
 	// no need to requeue if everything is ready
 	if cr.Status.Phase == enterpriseApi.PhaseReady {
+		cr.Status.Image = cr.Spec.Image
 		//upgrade fron automated MC to MC CRD
 		namespacedName := types.NamespacedName{Namespace: cr.GetNamespace(), Name: GetSplunkStatefulsetName(SplunkMonitoringConsole, cr.GetNamespace())}
 		err = splctrl.DeleteReferencesToAutomatedMCIfExists(ctx, client, cr, namespacedName)

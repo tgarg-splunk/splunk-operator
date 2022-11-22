@@ -34,20 +34,19 @@ import (
 
 	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
 	enterpriseApiV3 "github.com/splunk/splunk-operator/api/v3"
 	splclient "github.com/splunk/splunk-operator/pkg/splunk/client"
 	splcommon "github.com/splunk/splunk-operator/pkg/splunk/common"
 	splctrl "github.com/splunk/splunk-operator/pkg/splunk/controller"
 	splutil "github.com/splunk/splunk-operator/pkg/splunk/util"
-
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/types"
+	rclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	// Used to move files between pods
 	_ "unsafe"
 )
@@ -2200,4 +2199,194 @@ func getApplicablePodNameForK8Probes(cr splcommon.MetaObject, ordinalIdx int32) 
 		podType = "monitoring-console"
 	}
 	return fmt.Sprintf("splunk-%s-%s-%d", cr.GetName(), podType, ordinalIdx)
+}
+
+// IsCustomResourceUpgradable
+//   - Add new Status field to CR for Image version Installed
+//   - Add Description Status field in CR with error message when
+//     Version is not supported
+//   - Update the Status Image Version with currently installed version
+//   - (still need to check if we can get this information dynamically from Pod)
+//   - License Manager Controller:
+//     ** Check Spec for Given Version compare with Current Installed Version,
+//     If they differ Add Image version to Statefulset
+//   - Cluster Master
+//     ** Check Spec for Given Version compare with Current Installed Version
+//     ** Check License Manager that has ClusterManagerRef with the same Cluster
+//     Master in the same namespace (currently only supported within the namespace)
+//     ** If License Manager is already updated to the version in the Spec then
+//     update the statefulset with the given image
+//   - Monitoring Console
+//     ** Check Spec for Given Version compare with Current Installed Version
+//     ** Check Monitoring Console that has ClusterManagerRef with the same
+//     Cluster Master in the same namespace (currently only supported within
+//     the namespace)
+//     ** If Cluster Manager is already updated to the version in the Spec then
+//     update the statefulset with the given image
+//   - Search Head Cluster
+//     ** Check Spec for Given Version compare with Current Installed Version
+//     ** Check Search Head Cluster Console that has ClusterManagerRef with the
+//     same Cluster Master in the same namespace (currently only supported
+//     within the namespace)
+//     ** If Monitoring Console is already updated to the version in the Spec
+//     then update the statefulset with the given image
+//   - Indexer - Loop if more than one zone
+//     ** Check Spec for Given Version compare with Current Installed Version
+//     ** Check Monitoring Console that has ClusterManagerRef with the same Cluster
+//     Master in the same namespace (currently only supported within the namespace)
+//     ** If Search Head Cluster is already updated to the version in the Spec then
+//     update the statefulset with the given image
+func IsCustomResourceUpgradable(ctx context.Context, client splcommon.ControllerClient,
+	cr splcommon.MetaObject, spec *enterpriseApi.CommonSplunkSpec, eventPublisher *K8EventPublisher) error {
+	kind := cr.GetObjectKind().GroupVersionKind().Kind
+
+	// if kind is of type standalone or licensemaster go ahead and upgrade
+	if kind == "Standalone" || kind == "LicenseMaster" {
+		return nil
+	}
+
+	// if anything else , upgrade license master first
+	{
+		opts := []rclient.ListOption{
+			rclient.InNamespace(cr.GetNamespace()),
+		}
+		licenseManagers := &enterpriseApi.LicenseManagerList{}
+		err := client.List(ctx, licenseManagers, opts...)
+		if err == nil {
+			// filter the licensemanager for this clustermanager
+			for _, v := range licenseManagers.Items {
+				// this one assumes that this is cluster manager
+				if v.GetObjectMeta().GetName() == spec.LicenseManagerRef.Name {
+					if v.Status.Image != spec.Image || v.Status.Phase != enterpriseApi.PhaseReady {
+						msg := "waiting for license manager upgrade to complete"
+						eventPublisher.Warning(ctx, "Upgrade", msg)
+						return fmt.Errorf(msg)
+					}
+					break
+				}
+			}
+		}
+	}
+
+	// for cluster manager only license manager need to upgraded for it to start
+	if kind == "ClusterManager" {
+		return nil
+	}
+
+	// for anything else make sure cluster manager is upgraded
+	{
+		opts := []rclient.ListOption{
+			rclient.InNamespace(cr.GetNamespace()),
+		}
+		clusterManagers := &enterpriseApi.ClusterManagerList{}
+		err := client.List(ctx, clusterManagers, opts...)
+		if err == nil {
+			// filter the clusterMasters for this monitoring console
+			for _, v := range clusterManagers.Items {
+				if v.ObjectMeta.Name == spec.ClusterManagerRef.Name {
+					if v.Status.Image != spec.Image || v.Status.Phase != enterpriseApi.PhaseReady {
+						msg := "waiting for cluster manager upgrade to complete"
+						eventPublisher.Warning(ctx, "Upgrade", msg)
+						return fmt.Errorf(msg)
+					}
+					break
+				}
+			}
+		}
+	}
+
+	// since cluster manager and license manager are upgraded now monitoring console can start
+	if kind == "MonitorinConsole" {
+		return nil
+	}
+
+	{
+
+		opts := []rclient.ListOption{
+			rclient.InNamespace(cr.GetNamespace()),
+		}
+		monitoringConsoles := &enterpriseApi.MonitoringConsoleList{}
+		err := client.List(ctx, monitoringConsoles, opts...)
+		if err == nil {
+			// filter the clusterMasters for this monitoring console
+			for _, v := range monitoringConsoles.Items {
+				if v.Spec.ClusterManagerRef.Name == spec.ClusterManagerRef.Name {
+					if v.Status.Image != spec.Image || v.Status.Phase != enterpriseApi.PhaseReady {
+						msg := "waiting for monitoring consoles upgrade to complete"
+						eventPublisher.Warning(ctx, "Upgrade", msg)
+						return fmt.Errorf(msg)
+					}
+					break
+				}
+			}
+		}
+	}
+
+	// now we can upgrade search head cluster
+	if kind == "SearchHeadCluster" {
+		return nil
+	}
+
+	{
+
+		opts := []rclient.ListOption{
+			rclient.InNamespace(cr.GetNamespace()),
+		}
+		searchHeadClusters := &enterpriseApi.SearchHeadClusterList{}
+		err := client.List(ctx, searchHeadClusters, opts...)
+		if err == nil {
+			// filter the cluster manager for this search head cluster
+			for _, v := range searchHeadClusters.Items {
+				if v.Spec.ClusterManagerRef.Name == spec.ClusterManagerRef.Name {
+					if v.Status.Image != spec.Image || v.Status.Phase != enterpriseApi.PhaseReady {
+						msg := "waiting for search head cluster upgrade to complete"
+						eventPublisher.Warning(ctx, "Update", msg)
+						return fmt.Errorf(msg)
+					}
+					break
+				}
+			}
+		}
+
+		if spec.ClusterManagerRef.Name != "" {
+			namespacedName := types.NamespacedName{
+				Name:      spec.ClusterManagerRef.Name,
+				Namespace: cr.GetNamespace(),
+			}
+
+			clusterManager := &enterpriseApi.ClusterManager{}
+			err = client.Get(ctx, namespacedName, clusterManager)
+			if err == nil {
+				statefulset := &appsv1.StatefulSet{}
+				namespacedName := types.NamespacedName{
+					Name:      fmt.Sprintf("splunk-%s-cluster-manager", clusterManager.GetObjectMeta().GetName()),
+					Namespace: cr.GetNamespace(),
+				}
+				err = client.Get(ctx, namespacedName, statefulset)
+				if err == nil {
+					for _, v := range statefulset.OwnerReferences {
+						if v.Kind == cr.GroupVersionKind().Kind {
+							if v.Name == cr.GetName() {
+								break
+							}
+							namespacedName = types.NamespacedName{
+								Name:      v.Name,
+								Namespace: cr.GetNamespace(),
+							}
+
+							indexerCluster := &enterpriseApi.IndexerCluster{}
+							err = client.Get(ctx, namespacedName, indexerCluster)
+							if err != nil && (indexerCluster.Spec.Image != spec.Image || indexerCluster.Status.Phase != enterpriseApi.PhaseReady) {
+								msg := "waiting for other indexer cluster upgrade to complete"
+								eventPublisher.Warning(ctx, "Upgrade", msg)
+								return fmt.Errorf(msg)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return nil
 }

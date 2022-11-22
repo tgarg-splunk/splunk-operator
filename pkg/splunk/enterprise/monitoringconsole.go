@@ -19,11 +19,6 @@ import (
 	"context"
 	"fmt"
 	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
-	"reflect"
-	"sort"
-	"strings"
-	"time"
-
 	splcommon "github.com/splunk/splunk-operator/pkg/splunk/common"
 	splctrl "github.com/splunk/splunk-operator/pkg/splunk/controller"
 	splutil "github.com/splunk/splunk-operator/pkg/splunk/util"
@@ -32,8 +27,12 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sort"
+	"strings"
+	"time"
 )
 
 // ApplyMonitoringConsole reconciles the StatefulSet for N monitoring console instances of Splunk Enterprise.
@@ -127,6 +126,13 @@ func ApplyMonitoringConsole(ctx context.Context, client splcommon.ControllerClie
 		return result, err
 	}
 
+	err = IsCustomResourceUpgradable(ctx, client, cr, &cr.Spec.CommonSplunkSpec, eventPublisher)
+	if err != nil {
+		cr.Status.Phase = enterpriseApi.PhasePending
+		cr.Status.ErrorMessage = err.Error()
+		return result, err
+	}
+
 	// create or update statefulset
 	statefulSet, err := getMonitoringConsoleStatefulSet(ctx, client, cr)
 	if err != nil {
@@ -144,6 +150,7 @@ func ApplyMonitoringConsole(ctx context.Context, client splcommon.ControllerClie
 
 	// no need to requeue if everything is ready
 	if cr.Status.Phase == enterpriseApi.PhaseReady {
+		cr.Status.Image = cr.Spec.Image
 		finalResult := handleAppFrameworkActivity(ctx, client, cr, &cr.Status.AppContext, &cr.Spec.AppFrameworkConfig)
 		result = *finalResult
 	}

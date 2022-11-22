@@ -50,6 +50,10 @@ type StandaloneSpec struct {
 
 // StandaloneStatus defines the observed state of a Splunk Enterprise standalone instances.
 type StandaloneStatus struct {
+
+	// Installed Splunk Image tag
+	Image string `json:"image"`
+
 	// current phase of the standalone instances
 	Phase Phase `json:"phase"`
 
@@ -73,6 +77,9 @@ type StandaloneStatus struct {
 
 	// Telemetry App installation flag
 	TelAppInstalled bool `json:"telAppInstalled"`
+
+	// the last error message by CR
+	ErrorMessage string `json:"errorMessage"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
