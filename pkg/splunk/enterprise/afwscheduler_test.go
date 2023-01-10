@@ -149,7 +149,7 @@ func TestCreateAndAddPipelineWorker(t *testing.T) {
 	var statefulSet *appsv1.StatefulSet = &appsv1.StatefulSet{}
 
 	// Test for createAndAddPipelineWorker
-	afwPpln := initAppInstallPipeline(ctx, &appFrameworkContext, client, &cr)
+	afwPpln, _ := initAppInstallPipeline(ctx, &appFrameworkContext, client, &cr)
 
 	afwPpln.createAndAddPipelineWorker(ctx, enterpriseApi.PhaseDownload, appDeployInfo, appSrcName, podName, appFrameworkConfig, client, &cr, statefulSet)
 	if len(afwPpln.pplnPhases[enterpriseApi.PhaseDownload].q) != 1 {
@@ -233,8 +233,10 @@ func TestCreateFanOutWorker(t *testing.T) {
 		t.Errorf("Unable to create a fanout worker")
 	}
 
-	if fanOutWorker.fanOut {
-		t.Errorf("FanOut flag should be false on the new worker")
+	if fanOutWorker != nil {
+		if fanOutWorker.fanOut {
+			t.Errorf("FanOut flag should be false on the new worker")
+		}
 	}
 
 	if fanOutWorker.targetPodName != "splunk-stack1-standalone-0" {
@@ -281,7 +283,7 @@ func TestGetApplicablePodNameForAppFramework(t *testing.T) {
 		t.Errorf("Unable to fetch correct pod name. Expected %s, returned %s", expectedPodName, returnedPodName)
 	}
 
-	cr.TypeMeta.Kind = "SearchHeadCluster"
+	cr.TypeMeta.Kind = "Deployer"
 	expectedPodName = "splunk-stack1-deployer-0"
 	returnedPodName = getApplicablePodNameForAppFramework(&cr, podID)
 	if expectedPodName != returnedPodName {
@@ -298,13 +300,16 @@ func TestGetApplicablePodNameForAppFramework(t *testing.T) {
 
 func TestInitAppInstallPipeline(t *testing.T) {
 	ctx := context.TODO()
-	cr := enterpriseApi.ClusterManager{}
+	cr := enterpriseApi.ClusterManager{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ClusterManager",
+		}}
 	c := spltest.NewMockClient()
 	appDeployContext := &enterpriseApi.AppDeploymentContext{}
-	ppln := initAppInstallPipeline(ctx, appDeployContext, c, &cr)
+	ppln, err := initAppInstallPipeline(ctx, appDeployContext, c, &cr)
 
-	if ppln == nil {
-		t.Errorf("Failed to create a new pipeline")
+	if ppln == nil || err != nil {
+		t.Errorf("Failed to create a new pipeline, error %v", err)
 	}
 }
 
@@ -326,7 +331,7 @@ func TestDeleteWorkerFromPipelinePhase(t *testing.T) {
 		},
 	}
 	appDeployContext := &enterpriseApi.AppDeploymentContext{}
-	ppln := initAppInstallPipeline(ctx, appDeployContext, c, &cr)
+	ppln, _ := initAppInstallPipeline(ctx, appDeployContext, c, &cr)
 
 	if len(ppln.pplnPhases[enterpriseApi.PhaseDownload].q)+len(ppln.pplnPhases[enterpriseApi.PhasePodCopy].q)+len(ppln.pplnPhases[enterpriseApi.PhaseInstall].q) > 0 {
 		t.Errorf("Initially Pipeline must be empty, but found as non-empty")
@@ -420,7 +425,7 @@ func TestTransitionWorkerPhase(t *testing.T) {
 	}
 
 	c := spltest.NewMockClient()
-	ppln := initAppInstallPipeline(ctx, appDeployContext, c, &cr)
+	ppln, _ := initAppInstallPipeline(ctx, appDeployContext, c, &cr)
 
 	var replicas int32 = 1
 	sts := &appsv1.StatefulSet{
@@ -607,7 +612,7 @@ func TestPhaseManagersTermination(t *testing.T) {
 		t.Errorf("unable to apply statefulset")
 	}
 	appDeployContext := &enterpriseApi.AppDeploymentContext{}
-	ppln := initAppInstallPipeline(ctx, appDeployContext, c, cr)
+	ppln, _ := initAppInstallPipeline(ctx, appDeployContext, c, cr)
 
 	ppln.appDeployContext.AppsStatusMaxConcurrentAppDownloads = 1
 	ppln.phaseWaiter.Add(1)
@@ -729,7 +734,7 @@ func TestPhaseManagersMsgChannels(t *testing.T) {
 	}
 
 	// test  all the pipeline phases are able to send the worker to the downstreams
-	ppln := initAppInstallPipeline(ctx, appDeployContext, client, &cr)
+	ppln, _ := initAppInstallPipeline(ctx, appDeployContext, client, &cr)
 	// Make sure that the workers move from the download phase to the pod Copy phase
 	ppln.pplnPhases[enterpriseApi.PhaseDownload].q = append(ppln.pplnPhases[enterpriseApi.PhaseDownload].q, workerList...)
 
@@ -822,7 +827,7 @@ func TestIsPipelineEmpty(t *testing.T) {
 	}
 
 	appDeployContext := &enterpriseApi.AppDeploymentContext{}
-	ppln := initAppInstallPipeline(ctx, appDeployContext, c, cr)
+	ppln, _ := initAppInstallPipeline(ctx, appDeployContext, c, cr)
 
 	if !ppln.isPipelineEmpty() {
 		t.Errorf("Expected empty pipeline, but found some workers in pipeline")
@@ -1186,12 +1191,13 @@ func TestAfwGetReleventStatefulsetByKind(t *testing.T) {
 	if err != nil {
 		return
 	}
-	if afwGetReleventStatefulsetByKind(ctx, &cr, c) == nil {
+	cmSts, err := afwGetReleventStatefulsetByKind(ctx, &cr, c)
+	if cmSts == nil || err != nil {
 		t.Errorf("Unable to get the sts for CM")
 	}
 
 	// Test if STS works for deployer
-	cr.TypeMeta.Kind = "SearchHeadCluster"
+	cr.TypeMeta.Kind = "Deployer"
 	current = appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "splunk-stack1-deployer",
@@ -1200,7 +1206,8 @@ func TestAfwGetReleventStatefulsetByKind(t *testing.T) {
 	}
 
 	_, _ = splctrl.ApplyStatefulSet(ctx, c, &current)
-	if afwGetReleventStatefulsetByKind(ctx, &cr, c) == nil {
+	sts, err := afwGetReleventStatefulsetByKind(ctx, &cr, c)
+	if sts == nil || err != nil {
 		t.Errorf("Unable to get the sts for SHC deployer")
 	}
 
@@ -1214,7 +1221,8 @@ func TestAfwGetReleventStatefulsetByKind(t *testing.T) {
 	}
 
 	_, _ = splctrl.ApplyStatefulSet(ctx, c, &current)
-	if afwGetReleventStatefulsetByKind(ctx, &cr, c) == nil {
+	crSts, err := afwGetReleventStatefulsetByKind(ctx, &cr, c)
+	if crSts == nil || err != nil {
 		t.Errorf("Unable to get the sts for SHC deployer")
 	}
 
@@ -1228,7 +1236,8 @@ func TestAfwGetReleventStatefulsetByKind(t *testing.T) {
 	}
 
 	_, _ = splctrl.ApplyStatefulSet(ctx, c, &current)
-	if afwGetReleventStatefulsetByKind(ctx, &cr, c) == nil {
+	crSts, err = afwGetReleventStatefulsetByKind(ctx, &cr, c)
+	if crSts == nil || err != nil {
 		t.Errorf("Unable to get the sts for SHC deployer")
 	}
 
@@ -1608,7 +1617,7 @@ func TestScheduleDownloads(t *testing.T) {
 	sts.Spec.Replicas = new(int32)
 	*sts.Spec.Replicas = 1
 
-	ppln = initAppInstallPipeline(ctx, appDeployContext, client, &cr)
+	ppln, _ = initAppInstallPipeline(ctx, appDeployContext, client, &cr)
 	pplnPhase := ppln.pplnPhases[enterpriseApi.PhaseDownload]
 
 	testApps := []string{"app1.tgz", "app2.tgz", "app3.tgz"}
@@ -1832,7 +1841,7 @@ func TestExtractClusterScopedAppOnPod(t *testing.T) {
 		t.Errorf("Calling with non-cluster scope should just return, without error, but got error %v", err)
 	}
 
-	// CR kind other than SearchHeadCluster or Cluster Master should just return without an error
+	// CR kind other than Deployer or Cluster Master should just return without an error
 	// Calling with wrong scope should just return, without error
 	err = extractClusterScopedAppOnPod(ctx, worker, enterpriseApi.ScopeCluster, dstPath, srcPath, mockPodExecClient)
 	if err != nil {
@@ -2092,7 +2101,7 @@ func TestPodCopyWorkerHandler(t *testing.T) {
 	var appDeployContext *enterpriseApi.AppDeploymentContext = &enterpriseApi.AppDeploymentContext{
 		AppsStatusMaxConcurrentAppDownloads: 5,
 	}
-	ppln := initAppInstallPipeline(ctx, appDeployContext, client, &cr)
+	ppln, _ := initAppInstallPipeline(ctx, appDeployContext, client, &cr)
 
 	var handlerWaiter sync.WaitGroup
 	handlerWaiter.Add(1)
@@ -2161,7 +2170,7 @@ func TestIDXCRunPlaybook(t *testing.T) {
 	appDeployContext.AppsSrcDeployStatus["appSrc1"] = appSrcDeployInfo
 
 	appDeployContext.BundlePushStatus.BundlePushStage = enterpriseApi.BundlePushPending
-	afwPipeline := initAppInstallPipeline(ctx, appDeployContext, c, &cr)
+	afwPipeline, _ := initAppInstallPipeline(ctx, appDeployContext, c, &cr)
 	// get the target pod name
 	targetPodName := getApplicablePodNameForAppFramework(&cr, 0)
 
@@ -2278,9 +2287,9 @@ func TestIDXCRunPlaybook(t *testing.T) {
 
 func TestSetLivenessProbeLevelForSHC(t *testing.T) {
 	ctx := context.TODO()
-	cr := &enterpriseApi.SearchHeadCluster{
+	cr := &enterpriseApi.Deployer{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "SearchHeadCluster",
+			Kind: "Deployer",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "stack1",
@@ -2313,9 +2322,11 @@ func TestSetLivenessProbeLevelForSHC(t *testing.T) {
 	mockPodExecClient.AddMockPodExecReturnContexts(ctx, podExecCommands, mockPodExecReturnContexts...)
 
 	playbookContext := &SHCPlaybookContext{
-		client:               c,
-		cr:                   cr,
-		afwPipeline:          nil,
+		client: c,
+		cr:     cr,
+		afwPipeline: &AppInstallPipeline{
+			searchHeadClusterName: "stack1",
+		},
 		targetPodName:        targetPodName,
 		searchHeadCaptainURL: GetSplunkStatefulsetURL(cr.GetNamespace(), SplunkSearchHead, cr.GetName(), 0, false),
 		podExecClient:        mockPodExecClient,
@@ -2339,6 +2350,23 @@ func TestSetLivenessProbeLevelForSHC(t *testing.T) {
 	}
 
 	c.AddObject(sts)
+
+	// Test: Should return an error for SHC not found
+	err = playbookContext.setLivenessProbeLevel(ctx, livenessProbeLevelOne)
+	if err == nil {
+		t.Errorf("Should fail for not finding SHC")
+	}
+
+	shcCr := &enterpriseApi.SearchHeadCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "SearchHeadCluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "stack1",
+			Namespace: "test",
+		},
+	}
+	c.AddObject(shcCr)
 
 	// Test: Should not return an error, when tried with proper context
 	err = playbookContext.setLivenessProbeLevel(ctx, livenessProbeLevelOne)
@@ -2473,9 +2501,9 @@ func TestSetLivenessProbeLevelForIDXC(t *testing.T) {
 
 func TestSHCRunPlaybook(t *testing.T) {
 	ctx := context.TODO()
-	cr := &enterpriseApi.SearchHeadCluster{
+	cr := &enterpriseApi.Deployer{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "SearchHeadCluster",
+			Kind: "Deployer",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "stack1",
@@ -2513,7 +2541,36 @@ func TestSHCRunPlaybook(t *testing.T) {
 	appDeployContext.AppsSrcDeployStatus["appSrc1"] = appSrcDeployInfo
 
 	appDeployContext.BundlePushStatus.BundlePushStage = enterpriseApi.BundlePushPending
-	afwPipeline := initAppInstallPipeline(ctx, appDeployContext, c, cr)
+
+	// Create context for getShcConnDeployer
+
+	// Create statefulSet
+	ss := &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "splunk-stack1-deployer",
+			Namespace: "test",
+		},
+	}
+	c.Create(ctx, ss)
+
+	// Update SHC CR owner reference
+	ss.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+		{Kind: "SearchHeadCluster",
+			Name: "stack1"},
+	}
+	c.Update(ctx, ss)
+
+	// Create SHC CR
+	shcCr := enterpriseApi.SearchHeadCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "stack1",
+			Namespace: "test",
+		},
+		Spec: enterpriseApi.SearchHeadClusterSpec{},
+	}
+	c.Create(context.TODO(), &shcCr)
+
+	afwPipeline, _ := initAppInstallPipeline(ctx, appDeployContext, c, cr)
 	// get the target pod name
 	targetPodName := getApplicablePodNameForAppFramework(cr, 0)
 
@@ -2562,6 +2619,7 @@ func TestSHCRunPlaybook(t *testing.T) {
 		t.Errorf("playbookContext should be nil here since we passed invalid kind")
 	}
 
+	afwPipeline.searchHeadClusterName = GetSplunkStatefulsetURL(cr.GetNamespace(), SplunkSearchHead, cr.GetName(), 0, false)
 	playbookContext = getClusterScopePlaybookContext(ctx, c, cr, afwPipeline, targetPodName, kind, mockPodExecClient)
 
 	// Test2: If the poxExec failed for changing the file permissions, should return an error
@@ -3028,7 +3086,7 @@ func TestNeedToRunClusterScopedPlaybook(t *testing.T) {
 	}
 
 	cr.TypeMeta.Kind = "ClusterManager"
-	afwPipeline = initAppInstallPipeline(ctx, appDeployContext, client, cr)
+	afwPipeline, _ = initAppInstallPipeline(ctx, appDeployContext, client, cr)
 	podCopyWorker := &PipelineWorker{appDeployInfo: &enterpriseApi.AppDeploymentInfo{PhaseInfo: enterpriseApi.PhaseInfo{FailCount: 10}}}
 
 	afwPipeline.pplnPhases[enterpriseApi.PhasePodCopy].q = append(afwPipeline.pplnPhases[enterpriseApi.PhasePodCopy].q, podCopyWorker)
@@ -3331,7 +3389,7 @@ func TestInstallWorkerHandler(t *testing.T) {
 	var appDeployContext *enterpriseApi.AppDeploymentContext = &enterpriseApi.AppDeploymentContext{
 		AppsStatusMaxConcurrentAppDownloads: 5,
 	}
-	ppln := initAppInstallPipeline(ctx, appDeployContext, client, &cr)
+	ppln, _ := initAppInstallPipeline(ctx, appDeployContext, client, &cr)
 
 	podInstallTracker := make([]chan struct{}, *sts.Spec.Replicas)
 	for i := range podInstallTracker {
@@ -3520,7 +3578,7 @@ func TestGetClusterScopedAppsLocOnPod(t *testing.T) {
 	}
 
 	// should return shc cluster apps location
-	cr.TypeMeta.Kind = "SearchHeadCluster"
+	cr.TypeMeta.Kind = "Deployer"
 	retLoc = getClusterScopedAppsLocOnPod(cr)
 	if retLoc != shcAppsLocationOnDeployer {
 		t.Errorf("SHC: Expected location: %v, but got: %v", idxcAppsLocationOnClusterManager, retLoc)
@@ -3575,7 +3633,7 @@ func TestAdjustClusterAppsFilePermissions(t *testing.T) {
 	mockPodExecReturnContexts[0].StdErr = ""
 
 	// For SHC, should not return an error
-	cr.TypeMeta.Kind = "SearchHeadCluster"
+	cr.TypeMeta.Kind = "Deployer"
 	err = adjustClusterAppsFilePermissions(ctx, mockPodExecClient)
 	if err != nil {
 		t.Errorf("For SHC CR kind should not cause an error, but got error: %v", err)
@@ -3592,12 +3650,12 @@ func TestAdjustClusterAppsFilePermissions(t *testing.T) {
 
 func TestGetTelAppNameExtension(t *testing.T) {
 	crKinds := map[string]string{
-		"Standalone":        "stdaln",
-		"LicenseMaster":     "lmaster",
-		"LicenseManager":    "lmanager",
-		"SearchHeadCluster": "shc",
-		"ClusterMaster":     "cmaster",
-		"ClusterManager":    "cmanager",
+		"Standalone":     "stdaln",
+		"LicenseMaster":  "lmaster",
+		"LicenseManager": "lmanager",
+		"Deployer":       "shc",
+		"ClusterMaster":  "cmaster",
+		"ClusterManager": "cmanager",
 	}
 
 	// Test all CR kinds
@@ -3625,9 +3683,13 @@ func TestAddTelAppCMaster(t *testing.T) {
 		},
 	}
 
-	shcCr := &enterpriseApi.SearchHeadCluster{
+	deployerCr := &enterpriseApi.Deployer{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "SearchHeadCluster",
+			Kind: "Deployer",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "stack1",
+			Namespace: "test",
 		},
 	}
 
@@ -3650,21 +3712,54 @@ func TestAddTelAppCMaster(t *testing.T) {
 	mockPodExecClient.AddMockPodExecReturnContexts(ctx, podExecCommands, mockPodExecReturnContexts...)
 
 	// Test non-shc
-	err := addTelApp(ctx, mockPodExecClient, 1, cmCr)
+	err := addTelApp(ctx, spltest.NewMockClient(), mockPodExecClient, 1, cmCr)
 	if err != nil {
 		t.Errorf("Tel app not added successfully, error: %v", err)
 	}
 
 	// Test shc
+
+	// Create context for getShcConnDeployer
+	c := spltest.NewMockClient()
+
+	// Create statefulSet
+	ss := &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "splunk-stack1-deployer",
+			Namespace: "test",
+		},
+	}
+	c.Create(ctx, ss)
+
+	// Update SHC CR owner reference
+	ss.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+		{Kind: "SearchHeadCluster",
+			Name: "stack1"},
+	}
+	c.Update(ctx, ss)
+
+	// Create SHC CR
+	shcCr := enterpriseApi.SearchHeadCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "stack1",
+			Namespace: "test",
+		},
+		Spec: enterpriseApi.SearchHeadClusterSpec{},
+		Status: enterpriseApi.SearchHeadClusterStatus{
+			Phase: enterpriseApi.PhaseReady,
+		},
+	}
+	c.Create(context.TODO(), &shcCr)
+
 	podExecCommands = []string{
 		fmt.Sprintf(createTelAppShcString, shcAppsLocationOnDeployer, "shc", telAppConfString, shcAppsLocationOnDeployer, "shc"),
 		fmt.Sprintf(applySHCBundleCmdStr, GetSplunkStatefulsetURL(shcCr.GetNamespace(), SplunkSearchHead, shcCr.GetName(), 0, false), "/tmp/status.txt"),
 	}
 
 	mockPodExecClient.AddMockPodExecReturnContexts(ctx, podExecCommands, mockPodExecReturnContexts...)
-	mockPodExecClient.Cr = shcCr
+	mockPodExecClient.Cr = deployerCr
 
-	err = addTelApp(ctx, mockPodExecClient, 1, shcCr)
+	err = addTelApp(ctx, c, mockPodExecClient, 1, deployerCr)
 	if err != nil {
 		t.Errorf("Tel app not added successfully, error: %v", err)
 	}
@@ -3685,7 +3780,7 @@ func TestAddTelAppCMaster(t *testing.T) {
 	var mockPodExecClientError1 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: cmCr}
 	mockPodExecClientError1.AddMockPodExecReturnContexts(ctx, podExecCommandsError, mockPodExecReturnContextsError...)
 
-	err = addTelApp(ctx, mockPodExecClientError1, 1, cmCr)
+	err = addTelApp(ctx, c, mockPodExecClientError1, 1, cmCr)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -3697,7 +3792,7 @@ func TestAddTelAppCMaster(t *testing.T) {
 	var mockPodExecClientError2 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: cmCr}
 	mockPodExecClientError2.AddMockPodExecReturnContexts(ctx, podExecCommandsError, mockPodExecReturnContextsError...)
 
-	err = addTelApp(ctx, mockPodExecClientError2, 1, cmCr)
+	err = addTelApp(ctx, c, mockPodExecClientError2, 1, cmCr)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -3707,10 +3802,10 @@ func TestAddTelAppCMaster(t *testing.T) {
 		fmt.Sprintf(createTelAppShcString, shcAppsLocationOnDeployer, "shcerror", telAppConfString, shcAppsLocationOnDeployer, "shcerror"),
 	}
 
-	var mockPodExecClientError3 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: shcCr}
+	var mockPodExecClientError3 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: deployerCr}
 	mockPodExecClientError3.AddMockPodExecReturnContexts(ctx, podExecCommandsError, mockPodExecReturnContextsError...)
 
-	err = addTelApp(ctx, mockPodExecClientError3, 1, shcCr)
+	err = addTelApp(ctx, c, mockPodExecClientError3, 1, deployerCr)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -3719,10 +3814,10 @@ func TestAddTelAppCMaster(t *testing.T) {
 	podExecCommandsError = []string{
 		fmt.Sprintf(createTelAppShcString, shcAppsLocationOnDeployer, "shc", telAppConfString, shcAppsLocationOnDeployer, "shc"),
 	}
-	var mockPodExecClientError4 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: shcCr}
+	var mockPodExecClientError4 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: deployerCr}
 	mockPodExecClientError4.AddMockPodExecReturnContexts(ctx, podExecCommandsError, mockPodExecReturnContextsError...)
 
-	err = addTelApp(ctx, mockPodExecClientError4, 1, shcCr)
+	err = addTelApp(ctx, c, mockPodExecClientError4, 1, deployerCr)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -3738,9 +3833,13 @@ func TestAddTelAppCManager(t *testing.T) {
 		},
 	}
 
-	shcCr := &enterpriseApi.SearchHeadCluster{
+	deployerCr := &enterpriseApi.Deployer{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "SearchHeadCluster",
+			Kind: "Deployer",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "stack1",
+			Namespace: "test",
 		},
 	}
 
@@ -3763,21 +3862,54 @@ func TestAddTelAppCManager(t *testing.T) {
 	mockPodExecClient.AddMockPodExecReturnContexts(ctx, podExecCommands, mockPodExecReturnContexts...)
 
 	// Test non-shc
-	err := addTelApp(ctx, mockPodExecClient, 1, cmCr)
+	err := addTelApp(ctx, spltest.NewMockClient(), mockPodExecClient, 1, cmCr)
 	if err != nil {
 		t.Errorf("Tel app not added successfully, error: %v", err)
 	}
 
 	// Test shc
+
+	// Create context for getShcConnDeployer
+	c := spltest.NewMockClient()
+
+	// Create statefulSet
+	ss := &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "splunk-stack1-deployer",
+			Namespace: "test",
+		},
+	}
+	c.Create(ctx, ss)
+
+	// Update SHC CR owner reference
+	ss.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+		{Kind: "SearchHeadCluster",
+			Name: "stack1"},
+	}
+	c.Update(ctx, ss)
+
+	// Create SHC CR
+	shcCr := enterpriseApi.SearchHeadCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "stack1",
+			Namespace: "test",
+		},
+		Spec: enterpriseApi.SearchHeadClusterSpec{},
+		Status: enterpriseApi.SearchHeadClusterStatus{
+			Phase: enterpriseApi.PhaseReady,
+		},
+	}
+	c.Create(context.TODO(), &shcCr)
+
 	podExecCommands = []string{
 		fmt.Sprintf(createTelAppShcString, shcAppsLocationOnDeployer, "shc", telAppConfString, shcAppsLocationOnDeployer, "shc"),
 		fmt.Sprintf(applySHCBundleCmdStr, GetSplunkStatefulsetURL(shcCr.GetNamespace(), SplunkSearchHead, shcCr.GetName(), 0, false), "/tmp/status.txt"),
 	}
 
 	mockPodExecClient.AddMockPodExecReturnContexts(ctx, podExecCommands, mockPodExecReturnContexts...)
-	mockPodExecClient.Cr = shcCr
+	mockPodExecClient.Cr = deployerCr
 
-	err = addTelApp(ctx, mockPodExecClient, 1, shcCr)
+	err = addTelApp(ctx, c, mockPodExecClient, 1, deployerCr)
 	if err != nil {
 		t.Errorf("Tel app not added successfully, error: %v", err)
 	}
@@ -3798,7 +3930,7 @@ func TestAddTelAppCManager(t *testing.T) {
 	var mockPodExecClientError1 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: cmCr}
 	mockPodExecClientError1.AddMockPodExecReturnContexts(ctx, podExecCommandsError, mockPodExecReturnContextsError...)
 
-	err = addTelApp(ctx, mockPodExecClientError1, 1, cmCr)
+	err = addTelApp(ctx, c, mockPodExecClientError1, 1, cmCr)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -3810,7 +3942,7 @@ func TestAddTelAppCManager(t *testing.T) {
 	var mockPodExecClientError2 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: cmCr}
 	mockPodExecClientError2.AddMockPodExecReturnContexts(ctx, podExecCommandsError, mockPodExecReturnContextsError...)
 
-	err = addTelApp(ctx, mockPodExecClientError2, 1, cmCr)
+	err = addTelApp(ctx, c, mockPodExecClientError2, 1, cmCr)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -3820,10 +3952,10 @@ func TestAddTelAppCManager(t *testing.T) {
 		fmt.Sprintf(createTelAppShcString, shcAppsLocationOnDeployer, "shcerror", telAppConfString, shcAppsLocationOnDeployer, "shcerror"),
 	}
 
-	var mockPodExecClientError3 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: shcCr}
+	var mockPodExecClientError3 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: deployerCr}
 	mockPodExecClientError3.AddMockPodExecReturnContexts(ctx, podExecCommandsError, mockPodExecReturnContextsError...)
 
-	err = addTelApp(ctx, mockPodExecClientError3, 1, shcCr)
+	err = addTelApp(ctx, c, mockPodExecClientError3, 1, deployerCr)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -3832,10 +3964,10 @@ func TestAddTelAppCManager(t *testing.T) {
 	podExecCommandsError = []string{
 		fmt.Sprintf(createTelAppShcString, shcAppsLocationOnDeployer, "shc", telAppConfString, shcAppsLocationOnDeployer, "shc"),
 	}
-	var mockPodExecClientError4 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: shcCr}
+	var mockPodExecClientError4 *spltest.MockPodExecClient = &spltest.MockPodExecClient{Cr: deployerCr}
 	mockPodExecClientError4.AddMockPodExecReturnContexts(ctx, podExecCommandsError, mockPodExecReturnContextsError...)
 
-	err = addTelApp(ctx, mockPodExecClientError4, 1, shcCr)
+	err = addTelApp(ctx, c, mockPodExecClientError4, 1, deployerCr)
 	if err == nil {
 		t.Errorf("Expected error")
 	}

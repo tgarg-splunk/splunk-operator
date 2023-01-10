@@ -307,28 +307,19 @@ func getLicenseMasterURL(cr splcommon.MetaObject, spec *enterpriseApi.CommonSplu
 	}
 }
 
-// getSearchHeadExtraEnv returns extra environment variables used by search head clusters
+// getSearchHeadEnv returns extra environment variables used by search head clusters
 func getSearchHeadEnv(cr *enterpriseApi.SearchHeadCluster) []corev1.EnvVar {
-
-	// get search head env variables with deployer
-	env := getSearchHeadExtraEnv(cr, cr.Spec.Replicas)
-	env = append(env, corev1.EnvVar{
-		Name:  "SPLUNK_DEPLOYER_URL",
-		Value: GetSplunkServiceName(SplunkDeployer, cr.GetName(), false),
-	})
-
-	return env
-}
-
-// getSearchHeadExtraEnv returns extra environment variables used by search head clusters
-func getSearchHeadExtraEnv(cr splcommon.MetaObject, replicas int32) []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{
 			Name:  "SPLUNK_SEARCH_HEAD_URL",
-			Value: GetSplunkStatefulsetUrls(cr.GetNamespace(), SplunkSearchHead, cr.GetName(), replicas, false),
+			Value: GetSplunkStatefulsetUrls(cr.GetNamespace(), SplunkSearchHead, cr.GetName(), cr.Spec.Replicas, false),
 		}, {
 			Name:  "SPLUNK_SEARCH_HEAD_CAPTAIN_URL",
 			Value: GetSplunkStatefulsetURL(cr.GetNamespace(), SplunkSearchHead, cr.GetName(), 0, false),
+		},
+		{
+			Name:  "SPLUNK_DEPLOYER_URL",
+			Value: GetSplunkServiceName(SplunkDeployer, cr.Spec.DeployerRef.Name, false),
 		},
 	}
 }
@@ -1979,7 +1970,10 @@ func migrateAfwFromPhase2ToPhase3(ctx context.Context, client splcommon.Controll
 	reqLogger := log.FromContext(ctx)
 	scopedLog := reqLogger.WithName("migrateAfwFromPhase2ToPhase3").WithValues("name", cr.GetName(), "namespace", cr.GetNamespace())
 
-	sts := afwGetReleventStatefulsetByKind(ctx, cr, client)
+	sts, err := afwGetReleventStatefulsetByKind(ctx, cr, client)
+	if err != nil {
+		return fmt.Errorf("couldn't get statefulSet for cr")
+	}
 
 	for _, appSrcDeployInfo := range afwStatusContext.AppsSrcDeployStatus {
 		deployInfoList := appSrcDeployInfo.AppDeploymentInfoList
@@ -2071,7 +2065,6 @@ func updateCRStatus(ctx context.Context, client splcommon.ControllerClient, orig
 			// Status update successful
 			break
 		}
-
 		time.Sleep(time.Duration(tryCnt) * 10 * time.Millisecond)
 	}
 
@@ -2112,6 +2105,15 @@ func fetchCurrentCRWithStatusUpdate(ctx context.Context, client splcommon.Contro
 		}
 		origCR.(*enterpriseApi.LicenseManager).Status.DeepCopyInto(&latestLmCR.Status)
 		return latestLmCR, nil
+
+	case "Deployer":
+		latestDeployer := &enterpriseApi.Deployer{}
+		err = client.Get(ctx, namespacedName, latestDeployer)
+		if err != nil {
+			return nil, err
+		}
+		origCR.(*enterpriseApi.Deployer).Status.DeepCopyInto(&latestDeployer.Status)
+		return latestDeployer, nil
 
 	case "SearchHeadCluster":
 		latestShcCR := &enterpriseApi.SearchHeadCluster{}
@@ -2230,6 +2232,8 @@ func getApplicablePodNameForK8Probes(cr splcommon.MetaObject, ordinalIdx int32) 
 		podType = "standalone"
 	case "LicenseMaster":
 		podType = "license-master"
+	case "Deployer":
+		podType = "deployer"
 	case "SearchHeadCluster":
 		podType = "search-head"
 	case "IndexerCluster":

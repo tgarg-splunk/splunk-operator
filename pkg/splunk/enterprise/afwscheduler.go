@@ -79,9 +79,9 @@ func getApplicablePodNameForAppFramework(cr splcommon.MetaObject, ordinalIdx int
 		podType = "license-manager"
 	case "LicenseMaster":
 		podType = "license-master"
-	case "SearchHeadCluster":
+	case "Deployer":
 		podType = "deployer"
-	case "IndexerCluster":
+	case "IndexerCluster", "SearchHeadCluster":
 		return ""
 	case "ClusterMaster":
 		podType = "cluster-master"
@@ -126,12 +126,12 @@ func getTelAppNameExtension(crKind string) (string, error) {
 	switch crKind {
 	case "Standalone":
 		return "stdaln", nil
+	case "Deployer":
+		return "shc", nil
 	case "LicenseMaster":
 		return "lmaster", nil
 	case "LicenseManager":
 		return "lmanager", nil
-	case "SearchHeadCluster":
-		return "shc", nil
 	case "ClusterMaster":
 		return "cmaster", nil
 	case "ClusterManager":
@@ -142,7 +142,7 @@ func getTelAppNameExtension(crKind string) (string, error) {
 }
 
 // addTelApp adds a telemetry app
-var addTelApp = func(ctx context.Context, podExecClient splutil.PodExecClientImpl, replicas int32, cr splcommon.MetaObject) error {
+var addTelApp = func(ctx context.Context, c splcommon.ControllerClient, podExecClient splutil.PodExecClientImpl, replicas int32, cr splcommon.MetaObject) error {
 	var err error
 
 	reqLogger := log.FromContext(ctx)
@@ -163,19 +163,34 @@ var addTelApp = func(ctx context.Context, podExecClient splutil.PodExecClientImp
 	var command1, command2 string
 
 	// Handle non SHC scenarios(Standalone, CM, LM)
-	if crKind != "SearchHeadCluster" {
-		// Create dir on pods
-		command1 = fmt.Sprintf(createTelAppNonShcString, appNameExt, telAppConfString, appNameExt)
+	if crKind != "Deployer" {
+		// For non-shc scenario
+		if crKind != "SearchHeadCluster" {
+			// Create dir on pods
+			command1 = fmt.Sprintf(createTelAppNonShcString, appNameExt, telAppConfString, appNameExt)
 
-		// App reload
-		command2 = telAppReloadString
-
+			// App reload
+			command2 = telAppReloadString
+		}
 	} else {
+		// Handle deployer + shc scenario with bundle push
+
+		// Get SHC connected to deployer
+		shcCr, err := getShcConnDeployer(ctx, c, cr)
+		if err != nil {
+			return err
+		}
+
+		// Make sure SHC is up before bundle push
+		if shcCr.Status.Phase != enterpriseApi.PhaseReady {
+			return fmt.Errorf("SHC connected to deployer is not up yet, wait till it comes up")
+		}
+
 		// Create dir on pods
 		command1 = fmt.Sprintf(createTelAppShcString, shcAppsLocationOnDeployer, appNameExt, telAppConfString, shcAppsLocationOnDeployer, appNameExt)
 
 		// Bundle push
-		command2 = fmt.Sprintf(applySHCBundleCmdStr, GetSplunkStatefulsetURL(cr.GetNamespace(), SplunkSearchHead, cr.GetName(), 0, false), "/tmp/status.txt")
+		command2 = fmt.Sprintf(applySHCBundleCmdStr, GetSplunkStatefulsetURL(shcCr.GetNamespace(), SplunkSearchHead, shcCr.GetName(), 0, false), "/tmp/status.txt")
 	}
 
 	// Run the commands on Splunk pods
@@ -1202,7 +1217,7 @@ func isAppInstallationCompleteOnAllReplicas(auxPhaseInfo []enterpriseApi.PhaseIn
 
 // isClusterScoped checks whether current cr is a SHC or a CM
 func isClusterScoped(kind string) bool {
-	return kind == "ClusterMaster" || kind == "ClusterManager" || kind == "SearchHeadCluster"
+	return kind == "ClusterMaster" || kind == "ClusterManager" || kind == "Deployer"
 }
 
 // checkIfBundlePushIsDone checks if the bundle push is done, if there are cluster scoped apps
@@ -1222,7 +1237,8 @@ func initPipelinePhase(afwPipeline *AppInstallPipeline, phase enterpriseApi.AppP
 }
 
 // initAppInstallPipeline creates the AFW scheduler pipelines
-func initAppInstallPipeline(ctx context.Context, appDeployContext *enterpriseApi.AppDeploymentContext, client splcommon.ControllerClient, cr splcommon.MetaObject) *AppInstallPipeline {
+func initAppInstallPipeline(ctx context.Context, appDeployContext *enterpriseApi.AppDeploymentContext, client splcommon.ControllerClient, cr splcommon.MetaObject) (*AppInstallPipeline, error) {
+	var err error
 
 	afwPipeline := &AppInstallPipeline{}
 	afwPipeline.pplnPhases = make(map[enterpriseApi.AppPhaseType]*PipelinePhase, 3)
@@ -1231,7 +1247,19 @@ func initAppInstallPipeline(ctx context.Context, appDeployContext *enterpriseApi
 	afwPipeline.afwEntryTime = time.Now().Unix()
 	afwPipeline.cr = cr
 	afwPipeline.client = client
-	afwPipeline.sts = afwGetReleventStatefulsetByKind(ctx, cr, client)
+	afwPipeline.sts, err = afwGetReleventStatefulsetByKind(ctx, cr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update name of SHC in case of deployer CRD
+	if cr.GetObjectKind().GroupVersionKind().Kind == "Deployer" {
+		shc, err := getShcConnDeployer(ctx, client, cr)
+		if err != nil {
+			return nil, err
+		}
+		afwPipeline.searchHeadClusterName = shc.GetName()
+	}
 
 	// Allocate the Download phase
 	initPipelinePhase(afwPipeline, enterpriseApi.PhaseDownload)
@@ -1242,7 +1270,7 @@ func initAppInstallPipeline(ctx context.Context, appDeployContext *enterpriseApi
 	// Allocate the install phase
 	initPipelinePhase(afwPipeline, enterpriseApi.PhaseInstall)
 
-	return afwPipeline
+	return afwPipeline, nil
 }
 
 // deleteAppPkgFromOperator removes the app pkg from the Operator Pod
@@ -1262,7 +1290,7 @@ func deleteAppPkgFromOperator(ctx context.Context, worker *PipelineWorker) {
 	releaseStorage(worker.appDeployInfo.Size)
 }
 
-func afwGetReleventStatefulsetByKind(ctx context.Context, cr splcommon.MetaObject, client splcommon.ControllerClient) *appsv1.StatefulSet {
+func afwGetReleventStatefulsetByKind(ctx context.Context, cr splcommon.MetaObject, client splcommon.ControllerClient) (*appsv1.StatefulSet, error) {
 	reqLogger := log.FromContext(ctx)
 	scopedLog := reqLogger.WithName("getReleventStatefulsetByKind").WithValues("name", cr.GetName(), "namespace", cr.GetNamespace())
 	var instanceID InstanceType
@@ -1274,7 +1302,7 @@ func afwGetReleventStatefulsetByKind(ctx context.Context, cr splcommon.MetaObjec
 		instanceID = SplunkLicenseManager
 	case "LicenseMaster":
 		instanceID = SplunkLicenseMaster
-	case "SearchHeadCluster":
+	case "Deployer":
 		instanceID = SplunkDeployer
 	case "ClusterMaster":
 		instanceID = SplunkClusterMaster
@@ -1283,7 +1311,7 @@ func afwGetReleventStatefulsetByKind(ctx context.Context, cr splcommon.MetaObjec
 	case "MonitoringConsole":
 		instanceID = SplunkMonitoringConsole
 	default:
-		return nil
+		return nil, fmt.Errorf("invalid CR kind, unable to retrieve statefulSet")
 	}
 
 	statefulsetName := GetSplunkStatefulsetName(instanceID, cr.GetName())
@@ -1293,7 +1321,7 @@ func afwGetReleventStatefulsetByKind(ctx context.Context, cr splcommon.MetaObjec
 		scopedLog.Error(err, "Unable to get the stateful set")
 	}
 
-	return sts
+	return sts, nil
 }
 
 // getIdxcPlaybookContext returns the idxc playbook context
@@ -1314,7 +1342,7 @@ func getSHCPlaybookContext(ctx context.Context, client splcommon.ControllerClien
 		cr:                   cr,
 		afwPipeline:          afwPipeline,
 		targetPodName:        podName,
-		searchHeadCaptainURL: GetSplunkStatefulsetURL(cr.GetNamespace(), SplunkSearchHead, cr.GetName(), 0, false),
+		searchHeadCaptainURL: GetSplunkStatefulsetURL(cr.GetNamespace(), SplunkSearchHead, afwPipeline.searchHeadClusterName, 0, false),
 		podExecClient:        podExecClient,
 	}
 }
@@ -1334,7 +1362,7 @@ func getClusterScopePlaybookContext(ctx context.Context, client splcommon.Contro
 	switch kind {
 	case "ClusterManager", "ClusterMaster":
 		return getIdxcPlaybookContext(ctx, client, cr, afwPipeline, podName, podExecClient)
-	case "SearchHeadCluster":
+	case "Deployer":
 		return getSHCPlaybookContext(ctx, client, cr, afwPipeline, podName, podExecClient)
 	default:
 		return nil
@@ -1434,7 +1462,7 @@ func (shcPlaybookContext *SHCPlaybookContext) setLivenessProbeLevel(ctx context.
 	reqLogger := log.FromContext(ctx)
 	scopedLog := reqLogger.WithName("shcPlaybookContext.setLivenessProbeLevel()")
 
-	shcStsName := GetSplunkStatefulsetName(SplunkSearchHead, shcPlaybookContext.cr.GetName())
+	shcStsName := GetSplunkStatefulsetName(SplunkSearchHead, shcPlaybookContext.afwPipeline.searchHeadClusterName)
 	shcStsNamespaceName := types.NamespacedName{Namespace: shcPlaybookContext.cr.GetNamespace(), Name: shcStsName}
 	shcSts, err := splctrl.GetStatefulSetByName(ctx, shcPlaybookContext.client, shcStsNamespaceName)
 	if err != nil {
@@ -1442,19 +1470,28 @@ func (shcPlaybookContext *SHCPlaybookContext) setLivenessProbeLevel(ctx context.
 		return err
 	}
 
+	// Get SHC CR
+	var shcCr enterpriseApi.SearchHeadCluster
+	shcCrNsName := types.NamespacedName{Namespace: shcPlaybookContext.cr.GetNamespace(), Name: shcPlaybookContext.afwPipeline.searchHeadClusterName}
+	err = shcPlaybookContext.client.Get(ctx, shcCrNsName, &shcCr)
+	if err != nil {
+		scopedLog.Error(err, "Unable to get SHC")
+		return err
+	}
+
 	err = func() error {
 		// playbook context uses fixed CR and target pod names, but, when it comes to the
 		// probes tuning, we are mostly dealing with different pods, and also CRs,
 		// so, backup and then restore
-		cr := shcPlaybookContext.podExecClient.GetCR()
+		depCr := shcPlaybookContext.podExecClient.GetCR()
 		targetPodname := shcPlaybookContext.podExecClient.GetTargetPodName()
 
 		defer func() {
-			shcPlaybookContext.podExecClient.SetCR(cr)
+			shcPlaybookContext.podExecClient.SetCR(depCr)
 			shcPlaybookContext.podExecClient.SetTargetPodName(ctx, targetPodname)
 		}()
 
-		err = setProbeLevelOnCRPods(ctx, shcPlaybookContext.cr, *shcSts.Spec.Replicas, shcPlaybookContext.podExecClient, probeLevel)
+		err = setProbeLevelOnCRPods(ctx, &shcCr, *shcSts.Spec.Replicas, shcPlaybookContext.podExecClient, probeLevel)
 		if err != nil {
 			scopedLog.Error(err, "Unable to set the Liveness probe level")
 			return err
@@ -1471,7 +1508,7 @@ func getClusterScopedAppsLocOnPod(cr splcommon.MetaObject) string {
 	switch cr.GetObjectKind().GroupVersionKind().Kind {
 	case "ClusterManager", "ClusterMaster":
 		return idxcAppsLocationOnClusterManager
-	case "SearchHeadCluster":
+	case "Deployer":
 		return shcAppsLocationOnDeployer
 	default:
 		return ""
@@ -1502,7 +1539,7 @@ func (shcPlaybookContext *SHCPlaybookContext) runPlaybook(ctx context.Context) e
 
 	var err error
 	var ok bool
-	cr, ok := shcPlaybookContext.cr.(*enterpriseApi.SearchHeadCluster)
+	cr, ok := shcPlaybookContext.cr.(*enterpriseApi.Deployer)
 	if !ok {
 		return nil
 	}
@@ -1613,9 +1650,9 @@ func (idxcPlaybookContext *IdxcPlaybookContext) setLivenessProbeLevel(ctx contex
 	scopedLog := reqLogger.WithName("idxcPlaybookContext.setLivenessProbeLevel()")
 	var err error
 
-	managerSts := afwGetReleventStatefulsetByKind(ctx, idxcPlaybookContext.cr, idxcPlaybookContext.client)
-	if managerSts == nil {
-		return fmt.Errorf("not able to retrieve Cluster Manager STS")
+	managerSts, err := afwGetReleventStatefulsetByKind(ctx, idxcPlaybookContext.cr, idxcPlaybookContext.client)
+	if managerSts == nil || err != nil {
+		return fmt.Errorf("not able to retrieve Cluster Manager STS %s", err)
 	}
 
 	err = func() error {
@@ -1772,7 +1809,10 @@ func afwSchedulerEntry(ctx context.Context, client splcommon.ControllerClient, c
 		return true, fmt.Errorf("failed to update storage tracker, error: %v", err)
 	}
 
-	afwPipeline := initAppInstallPipeline(ctx, appDeployContext, client, cr)
+	afwPipeline, err := initAppInstallPipeline(ctx, appDeployContext, client, cr)
+	if err != nil {
+		return true, err
+	}
 
 	// Start the download phase manager
 	afwPipeline.phaseWaiter.Add(1)
@@ -1792,7 +1832,10 @@ func afwSchedulerEntry(ctx context.Context, client splcommon.ControllerClient, c
 
 		deployInfoList := appSrcDeployInfo.AppDeploymentInfoList
 
-		sts := afwGetReleventStatefulsetByKind(ctx, cr, client)
+		sts, err := afwGetReleventStatefulsetByKind(ctx, cr, client)
+		if err != nil {
+			return true, err
+		}
 		podName := getApplicablePodNameForAppFramework(cr, 0)
 
 		podExecClient := splutil.GetPodExecClient(client, cr, podName)
