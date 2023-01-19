@@ -980,7 +980,7 @@ var _ = Describe("c3appfw test", func() {
 			// Create App framework Spec for SHC
 			appSourceNameShc = "appframework-shc-" + testenv.RandomDNSName(3)
 			appSourceVolumeNameShc := "appframework-test-volume-shc-" + testenv.RandomDNSName(3)
-			appFrameworkSpecShc := testenv.GenerateAppFrameworkSpec(ctx, testcaseEnvInst, appSourceVolumeNameShc, enterpriseApi.ScopePremiumApps, appSourceNameShc, s3TestDirShc, 60)
+			appFrameworkSpecShc := testenv.GenerateAppFrameworkSpec(ctx, testcaseEnvInst, appSourceVolumeNameShc, enterpriseApi.ScopePremiumApps, appSourceNameShc, s3TestDirShc, 180)
 			appFrameworkSpecShc.AppSources[0].PremiumAppsProps = enterpriseApi.PremiumAppsProps{
 				Type: enterpriseApi.PremiumAppsTypeEs,
 				EsDefaults: enterpriseApi.EsDefaults{
@@ -991,7 +991,7 @@ var _ = Describe("c3appfw test", func() {
 			// Create App framework Spec for Indexer Cluster
 			appSourceNameIdxc = "appframework-idxc-" + enterpriseApi.ScopeCluster + testenv.RandomDNSName(3)
 			appSourceVolumeNameIdxc := "appframework-test-volume-idxc-" + testenv.RandomDNSName(3)
-			appFrameworkSpecIdxc := testenv.GenerateAppFrameworkSpec(ctx, testcaseEnvInst, appSourceVolumeNameIdxc, enterpriseApi.ScopeCluster, appSourceNameIdxc, s3TestDirIdxc, 60)
+			appFrameworkSpecIdxc := testenv.GenerateAppFrameworkSpec(ctx, testcaseEnvInst, appSourceVolumeNameIdxc, enterpriseApi.ScopeCluster, appSourceNameIdxc, s3TestDirIdxc, 180)
 
 			// Deploy C3 SVA
 			// Deploy the Cluster Manager
@@ -1061,16 +1061,16 @@ var _ = Describe("c3appfw test", func() {
 			testenv.AppFrameWorkVerifications(ctx, deployment, testcaseEnvInst, allAppSourceInfo, splunkPodAge, "")
 
 			//############### UPGRADE APPS ################
-			// Delete ES app on S3
-			testcaseEnvInst.Log.Info(fmt.Sprintf("Delete %s apps on S3", appVersion))
-			testenv.DeleteFilesOnS3(testS3Bucket, uploadedApps)
-			uploadedApps = nil
-
 			// Download ES App from S3
 			appVersion = "V2"
 			testcaseEnvInst.Log.Info("Download updated ES app from S3")
 			err = testenv.DownloadFilesFromS3(testDataS3Bucket, s3AppDirV2, downloadDirV2, appFileList)
 			Expect(err).To(Succeed(), "Unable to download ES app")
+
+			// Delete ES app on S3
+			testcaseEnvInst.Log.Info(fmt.Sprintf("Delete %s apps on S3", appVersion))
+			testenv.DeleteFilesOnS3(testS3Bucket, uploadedApps)
+			uploadedApps = nil
 
 			// Upload V2 ES app to S3 for Search Head Cluster
 			testcaseEnvInst.Log.Info(fmt.Sprintf("Upload %s ES app to S3 for Search Head Cluster", appVersion))

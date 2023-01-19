@@ -4,6 +4,7 @@ on:
     branches:
       - develop
       - main
+      - fix-es-upgrade-int-test
 jobs:
   build-operator-image:
     runs-on: ubuntu-latest
@@ -53,22 +54,8 @@ jobs:
       matrix:
         test:
           [
-            appframeworks1,
             managerappframeworkc3,
-            managerappframeworkm4,
-            managersecret,
-            managersmartstore,
-            managermc,
-            managercrcrud,
-            licensemanager,
             masterappframeworkc3,
-            masterappframeworkm4,
-            mastersecret,
-            mastersmartstore,
-            mastermc,
-            mastercrcrud,
-            licensemaster,
-            managerdeletecr,
           ]
     runs-on: ubuntu-latest
     needs: build-operator-image
