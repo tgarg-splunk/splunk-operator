@@ -967,8 +967,12 @@ var _ = Describe("c3appfw test", func() {
 
 			// Upload ES app to S3
 			testcaseEnvInst.Log.Info("Upload ES app to S3")
-			uploadedFiles, err := testenv.UploadFilesToS3(testS3Bucket, s3TestDirShc, appFileList, downloadDirV1)
-			Expect(err).To(Succeed(), "Unable to upload ES app to S3 test directory")
+			// Upload V2 ES app to S3 for Search Head Cluster
+			appVersion = "V2"
+			err, uploadedFiles := testenv.CopyFilesFromSrcBucketToDestination(appFileList, s3AppDirV1, s3TestDirShc)
+			Expect(err).To(Succeed(), "Unable to copy V2 ES app to destination bucket")
+			// uploadedFiles, err := testenv.UploadFilesToS3(testS3Bucket, s3TestDirShc, appFileList, downloadDirV1)
+			// Expect(err).To(Succeed(), "Unable to upload ES app to S3 test directory")
 			uploadedApps = append(uploadedApps, uploadedFiles...)
 
 			// Upload  Technology add-on apps to S3 for Indexer Cluster
@@ -1061,22 +1065,30 @@ var _ = Describe("c3appfw test", func() {
 			testenv.AppFrameWorkVerifications(ctx, deployment, testcaseEnvInst, allAppSourceInfo, splunkPodAge, "")
 
 			//############### UPGRADE APPS ################
-			// Download ES App from S3
-			appVersion = "V2"
-			testcaseEnvInst.Log.Info("Download updated ES app from S3")
-			err = testenv.DownloadFilesFromS3(testDataS3Bucket, s3AppDirV2, downloadDirV2, appFileList)
-			Expect(err).To(Succeed(), "Unable to download ES app")
-
-			// Delete ES app on S3
-			testcaseEnvInst.Log.Info(fmt.Sprintf("Delete %s apps on S3", appVersion))
-			testenv.DeleteFilesOnS3(testS3Bucket, uploadedApps)
-			uploadedApps = nil
 
 			// Upload V2 ES app to S3 for Search Head Cluster
-			testcaseEnvInst.Log.Info(fmt.Sprintf("Upload %s ES app to S3 for Search Head Cluster", appVersion))
-			uploadedFiles, err = testenv.UploadFilesToS3(testS3Bucket, s3TestDirShc, appFileList, downloadDirV2)
-			Expect(err).To(Succeed(), fmt.Sprintf("Unable to upload %s ES app to S3 test directory for Search Head Cluster", appVersion))
+			appVersion = "V2"
+			err, uploadedFiles = testenv.CopyFilesFromSrcBucketToDestination(appFileList, s3AppDirV2, s3TestDirShc)
+			Expect(err).To(Succeed(), "Unable to copy V2 ES app to destination bucket")
+			uploadedApps = nil
 			uploadedApps = append(uploadedApps, uploadedFiles...)
+
+			// Download ES App from S3
+			// appVersion = "V2"
+			// testcaseEnvInst.Log.Info("Download updated ES app from S3")
+			// err = testenv.DownloadFilesFromS3(testDataS3Bucket, s3AppDirV2, downloadDirV2, appFileList)
+			// Expect(err).To(Succeed(), "Unable to download ES app")
+
+			// Delete ES app on S3
+			// testcaseEnvInst.Log.Info(fmt.Sprintf("Delete %s apps on S3", appVersion))
+			// testenv.DeleteFilesOnS3(testS3Bucket, uploadedApps)
+			// uploadedApps = nil
+
+			// Upload V2 ES app to S3 for Search Head Cluster
+			// testcaseEnvInst.Log.Info(fmt.Sprintf("Upload %s ES app to S3 for Search Head Cluster", appVersion))
+			// uploadedFiles, err = testenv.UploadFilesToS3(testS3Bucket, s3TestDirShc, appFileList, downloadDirV2)
+			// Expect(err).To(Succeed(), fmt.Sprintf("Unable to upload %s ES app to S3 test directory for Search Head Cluster", appVersion))
+			// uploadedApps = append(uploadedApps, uploadedFiles...)
 
 			// Check for changes in App phase to determine if next poll has been triggered
 			testenv.WaitforPhaseChange(ctx, deployment, testcaseEnvInst, deployment.GetName()+"-shc", shc.Kind, appSourceNameShc, appFileList)

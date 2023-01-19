@@ -3,6 +3,7 @@ package testenv
 import (
 	"errors"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -232,6 +233,47 @@ func UploadFilesToS3(testS3Bucket string, s3TestDir string, applist []string, do
 		uploadedFiles = append(uploadedFiles, fileName)
 	}
 	return uploadedFiles, nil
+}
+
+// CopyFilesFromSrcBucketToDestination Copy files from given source s3 bucket to destination s3 bucket
+func CopyFilesFromSrcBucketToDestination(fileList []string, srcPath string, destPath string) (error, []string) {
+	sourceBucket := testS3Bucket
+	targetBucket := testIndexesS3Bucket
+	sess, err := S3Session()
+	if err != nil {
+		return err, nil
+	}
+	svc := s3.New(sess)
+	var uploadedFiles []string
+	for i := 0; i < len(fileList); i++ {
+		sourcePath := sourceBucket + "/" + srcPath + fileList[i]
+		destinationPath := destPath + "/" + fileList[i]
+		logf.Log.Info("Copy Files to destination S3", "Source Object Name", sourcePath, "Destination Object Name", destinationPath)
+		// Copy the item
+		_, err = svc.CopyObject(&s3.CopyObjectInput{
+			Bucket:     &targetBucket,
+			CopySource: aws.String(url.PathEscape(sourcePath)),
+			Key:        &destinationPath,
+		})
+
+		if err != nil {
+			logf.Log.Error(err, "Unable to copy file", "Filename", fileList[i])
+			return err, nil
+		}
+
+		// Wait till object copied to destination bucket
+		err = svc.WaitUntilObjectExists(&s3.HeadObjectInput{
+			Bucket: &targetBucket,
+			Key:    &destinationPath,
+		})
+
+		if err != nil {
+			logf.Log.Error(err, "Unsuccessfull to copy file", "Filename", fileList[i])
+			return err, nil
+		}
+		uploadedFiles = append(uploadedFiles, destinationPath)
+	}
+	return nil, uploadedFiles
 }
 
 // DisableAppsToS3 untar apps, modify their conf file to disable them, re-tar and upload the disabled version to S3
