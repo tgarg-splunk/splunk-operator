@@ -71,6 +71,10 @@ jobs:
       DEPLOYMENT_TYPE: "helm"
       HELM_REPO_PATH: "../../../../helm-chart"
     steps:
+      - name: set environment variables for release branch
+        if: github.ref == 'ref/head/helm-release-workflow'
+        run: |
+          echo "HELM_REPO_PATH=splunk" >> $GITHUB_ENV
       - name: Set Test Cluster Name
         run: |
           echo "TEST_CLUSTER_NAME=eks-integration-test-cluster-${{ matrix.test }}-$GITHUB_RUN_ID" >> $GITHUB_ENV
@@ -170,12 +174,26 @@ jobs:
           KUTTL_SPLUNK_OPERATOR_IMG: ${{ secrets.ECR_REPOSITORY }}/${{ env.SPLUNK_OPERATOR_IMAGE_NAME }}:$GITHUB_SHA 
         run: |
           kubectl kuttl test --config kuttl/kuttl-test-helm.yaml --report xml
-      - name: Publish Results
-        uses: mikepenz/action-junit-report@v3
+
+      - name: Test
+        run: dotnet test --logger "trx;LogFileName=kuttl/kuttl-artifacts.xml" || true
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
         if: always()
         with:
-          report_paths: '*/kuttl-artifacts/.xml'
-          detailed_summary: true
+          name: DotNET Tests
+          path: "**/kuttl-artifacts.xml"
+          reporter: dotnet-trx
+          fail-on-error: true
+
+      #- name: Publish Results
+      #  uses: mikepenz/action-junit-report@v3
+      #  if: always()
+      #  with:
+      #    report_paths: '*/kuttl-artifacts/.xml'
+      #    detailed_summary: true
+
       - name: Cleanup Test Case artifacts
         if: ${{ always() }}
         run: |
