@@ -1,0 +1,42 @@
+splunk-operator:
+  enabled: true
+  splunkOperator:
+    clusterWideAccess: false
+
+sva:
+  c3:
+    enabled: true
+    clusterManager:
+      name: cm
+    indexerClusters:
+      - name: idxc
+    searchHeadClusters:
+      - name: shc
+
+indexerClusters:
+  replicas: 3
+
+clusterManager:
+  smartstore:
+    defaults:
+      volumeName: helm-test-c3-with-apps-smartstore-kuttl-test-sharp-tomcat
+    indexes:
+      - name: main
+        remotePath: $_index_name
+        volumeName: helm-test-c3-with-apps-smartstore-kuttl-test-sharp-tomcat
+      - name: cloudwatch
+        remotePath: $_index_name
+        volumeName: helm-test-c3-with-apps-smartstore-kuttl-test-sharp-tomcat
+    volumes:
+      - name: helm-test-c3-with-apps-smartstore-kuttl-test-sharp-tomcat
+        path: helm-test-c3-with-apps-smartstore-kuttl-test-sharp-tomcat/smartstore
+        endpoint: https://s3-us-west-2.amazonaws.com
+        secretRef: s3-secret
+    cacheManager:
+      hotlistBloomFilterRecencyHours: 360 # 15 days - splunk defaults - (can be lowered to 5 days)
+      hotlistRecencySecs: 86400 # 24 hours - splunk defaults
+      evictionPadding: 1024 # 1Gi
+      evictionPolicy: lru # splunk defaults
+      maxCacheSize: 0 # Eviction will be based on the sum of 'minFreeSpace (5Gi)' and 'eviction_padding'
+      maxConcurrentDownloads: 8 # splunk defaults
+      maxConcurrentUploads: 8 # splunk defaults
