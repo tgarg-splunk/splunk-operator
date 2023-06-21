@@ -34,6 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	rclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -354,4 +355,68 @@ func DeleteURLsConfigMap(revised *corev1.ConfigMap, crName string, newURLs []cor
 			}
 		}
 	}
+}
+
+func upgradeScenario(ctx context.Context, c splcommon.ControllerClient, cr *enterpriseApi.ClusterManager) (bool, error) {
+
+	clusterManagerRef := cr.Spec.ClusterManagerRef
+	namespacedName := types.NamespacedName{Namespace: cr.GetNamespace(), Name: clusterManagerRef.Name}
+
+	// create new object
+	clusterManager := &enterpriseApi.ClusterManager{}
+
+	// get the license manager referred in cluster manager
+	err := c.Get(ctx, namespacedName, clusterManager)
+	if err != nil {
+		return false, err
+	}
+
+	cmImage, err := getClusterManagerCurrentImage(ctx, c, clusterManager)
+	mcImage, err := getMonitoringConsoleCurrentImage(ctx, c, cr)
+
+	if cr.Spec.Image != mcImage && cmImage == cr.Spec.Image && clusterManager.Status.Phase == enterpriseApi.PhaseReady {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func getMonitoringConsoleCurrentImage(ctx context.Context, c splcommon.ControllerClient, cr *enterpriseApi.ClusterManager) (string, error) {
+
+	namespacedName := types.NamespacedName{
+		Namespace: cr.GetNamespace(),
+		Name:      GetSplunkStatefulsetName(SplunkClusterManager, cr.GetName()),
+	}
+	statefulSet := &appsv1.StatefulSet{}
+	err := c.Get(ctx, namespacedName, statefulSet)
+	if err != nil {
+		return "", err
+	}
+	labelSelector, err := metav1.LabelSelectorAsSelector(statefulSet.Spec.Selector)
+	if err != nil {
+		return "", err
+	}
+
+	statefulsetPods := &corev1.PodList{}
+	opts := []rclient.ListOption{
+		rclient.InNamespace(cr.GetNamespace()),
+		rclient.MatchingLabelsSelector{Selector: labelSelector},
+	}
+
+	err = c.List(ctx, statefulsetPods, opts...)
+	if err != nil {
+		return "", err
+	}
+
+	for _, v := range statefulsetPods.Items {
+		for _, container := range v.Status.ContainerStatuses {
+			if strings.Contains(container.Name, "splunk") {
+				image := container.Image
+				return image, nil
+			}
+
+		}
+	}
+
+	return "", nil
 }

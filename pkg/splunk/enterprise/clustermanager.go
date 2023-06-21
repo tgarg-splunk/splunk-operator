@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	enterpriseApi "github.com/splunk/splunk-operator/api/v4"
@@ -31,7 +32,10 @@ import (
 	splutil "github.com/splunk/splunk-operator/pkg/splunk/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	rclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -433,4 +437,44 @@ func VerifyCMisMultisite(ctx context.Context, cr *enterpriseApi.ClusterManager, 
 		extraEnv = append(extraEnv, corev1.EnvVar{Name: "SPLUNK_SITE", Value: "site0"}, corev1.EnvVar{Name: "SPLUNK_MULTISITE_MASTER", Value: GetSplunkServiceName(SplunkClusterManager, cr.GetName(), false)})
 	}
 	return extraEnv, err
+}
+
+func getClusterManagerCurrentImage(ctx context.Context, c splcommon.ControllerClient, cr *enterpriseApi.ClusterManager) (string, error) {
+
+	namespacedName := types.NamespacedName{
+		Namespace: cr.GetNamespace(),
+		Name:      GetSplunkStatefulsetName(SplunkClusterManager, cr.GetName()),
+	}
+	statefulSet := &appsv1.StatefulSet{}
+	err := c.Get(ctx, namespacedName, statefulSet)
+	if err != nil {
+		return "", err
+	}
+	labelSelector, err := metav1.LabelSelectorAsSelector(statefulSet.Spec.Selector)
+	if err != nil {
+		return "", err
+	}
+
+	statefulsetPods := &corev1.PodList{}
+	opts := []rclient.ListOption{
+		rclient.InNamespace(cr.GetNamespace()),
+		rclient.MatchingLabelsSelector{Selector: labelSelector},
+	}
+
+	err = c.List(ctx, statefulsetPods, opts...)
+	if err != nil {
+		return "", err
+	}
+
+	for _, v := range statefulsetPods.Items {
+		for _, container := range v.Status.ContainerStatuses {
+			if strings.Contains(container.Name, "splunk") {
+				image := container.Image
+				return image, nil
+			}
+
+		}
+	}
+
+	return "", nil
 }
