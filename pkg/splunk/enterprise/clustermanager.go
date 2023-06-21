@@ -447,6 +447,7 @@ func VerifyCMisMultisite(ctx context.Context, cr *enterpriseApi.ClusterManager, 
 	return extraEnv, err
 }
 
+// upgradeScenario checks if it is suitable to update the clusterManager based on the Status of the licenseManager, returns bool, err accordingly
 func upgradeScenario(ctx context.Context, c splcommon.ControllerClient, cr *enterpriseApi.ClusterManager) (bool, error) {
 
 	licenseManagerRef := cr.Spec.LicenseManagerRef
@@ -464,6 +465,7 @@ func upgradeScenario(ctx context.Context, c splcommon.ControllerClient, cr *ente
 	lmImage, err := getLicenseManagerCurrentImage(ctx, c, licenseManager)
 	cmImage, err := getClusterManagerCurrentImage(ctx, c, cr)
 
+	// check conditions for upgrade
 	if cr.Spec.Image != cmImage && lmImage == cr.Spec.Image && licenseManager.Status.Phase == enterpriseApi.PhaseReady {
 		return true, nil
 	}
@@ -471,6 +473,8 @@ func upgradeScenario(ctx context.Context, c splcommon.ControllerClient, cr *ente
 	return false, nil
 }
 
+// getClusterManagerCurrentImage gets the image of the pods of the clusterManager before any upgrade takes place,
+// returns the image, and error if something goes wring
 func getClusterManagerCurrentImage(ctx context.Context, c splcommon.ControllerClient, cr *enterpriseApi.ClusterManager) (string, error) {
 
 	namespacedName := types.NamespacedName{
@@ -487,6 +491,7 @@ func getClusterManagerCurrentImage(ctx context.Context, c splcommon.ControllerCl
 		return "", err
 	}
 
+	// get a list of all pods in the namespace with matching labels as the statefulset
 	statefulsetPods := &corev1.PodList{}
 	opts := []rclient.ListOption{
 		rclient.InNamespace(cr.GetNamespace()),
@@ -498,6 +503,7 @@ func getClusterManagerCurrentImage(ctx context.Context, c splcommon.ControllerCl
 		return "", err
 	}
 
+	// find the container with the phrase 'splunk' in it
 	for _, v := range statefulsetPods.Items {
 		for _, container := range v.Status.ContainerStatuses {
 			if strings.Contains(container.Name, "splunk") {
