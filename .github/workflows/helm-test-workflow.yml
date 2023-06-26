@@ -2,6 +2,7 @@ name: Helm Test WorkFlow
 on:
   push:
     branches:
+      - CSPL-2342-CM-upgrade-strategy
       - develop
       - main
 jobs:
